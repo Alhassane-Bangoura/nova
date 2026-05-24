@@ -324,7 +324,7 @@ class _ProductsPageState extends State<ProductsPage> {
           // Lignes de données
           Expanded(
             child: ListView.separated(
-              separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade100),
+              separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade100),
               itemCount: _filtered.length,
               itemBuilder: (context, index) => _buildProductRow(_filtered[index]),
             ),
@@ -510,7 +510,7 @@ class _ProductsPageState extends State<ProductsPage> {
       builder: (ctx) => Dialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
+        child: SizedBox(
           width: MediaQuery.of(ctx).size.width > 550 ? 500 : MediaQuery.of(ctx).size.width * 0.95,
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -654,7 +654,7 @@ class _ProductsPageState extends State<ProductsPage> {
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
+        child: SizedBox(
           width: 400,
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -958,8 +958,8 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
           name: _nameCtrl.text.trim(),
           category: _categoryCtrl.text.trim(),
           salePrice: double.parse(_salePriceCtrl.text.trim()),
-          batch_id: _selectedPurchaseId,
-          transport_cost: totalTransportAndFees > 0 ? totalTransportAndFees : null,
+          batchId: _selectedPurchaseId,
+          transportCost: totalTransportAndFees > 0 ? totalTransportAndFees : null,
         );
         // We can also call receive API if we want to update transport cost, but for now we update product.
       } else if (widget.product == null) {
@@ -967,9 +967,9 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
           name: _nameCtrl.text.trim(),
           category: _categoryCtrl.text.trim(),
           salePrice: double.parse(_salePriceCtrl.text.trim()),
-          quantity_received: qty,
-          purchase_cost: totalPurchase,
-          transport_cost: totalTransportAndFees > 0 ? totalTransportAndFees : null,
+          quantityReceived: qty,
+          purchaseCost: totalPurchase,
+          transportCost: totalTransportAndFees > 0 ? totalTransportAndFees : null,
         );
       } else {
         // En édition, on met aussi à jour ces champs si modifiés (sera traité par le backend si supporté)
@@ -993,7 +993,7 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
     return Dialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Container(
+      child: SizedBox(
         width: MediaQuery.of(context).size.width > 650 ? 600 : MediaQuery.of(context).size.width * 0.95,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1048,7 +1048,7 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                       ),
                       hint: const Text('Lier à une commande de Chine...'),
-                      value: _selectedPurchaseId,
+                      initialValue: _selectedPurchaseId,
                       items: _purchases.map<DropdownMenuItem<String>>((p) {
                         return DropdownMenuItem<String>(
                           value: p['id'].toString(),

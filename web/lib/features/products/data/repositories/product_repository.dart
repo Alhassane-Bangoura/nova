@@ -21,18 +21,18 @@ class ProductRepository {
     required String category,
     String? color,
     required double salePrice,
-    double? quantity_received,
-    double? purchase_cost,
-    double? transport_cost,
+    double? quantityReceived,
+    double? purchaseCost,
+    double? transportCost,
   }) async {
     final result = await ApiService.post('/products', {
       'name': name,
       'category': category,
-      if (color != null) 'color': color,
+      'color': ?color,
       'selling_price': salePrice,
-      if (quantity_received != null) 'quantity_received': quantity_received,
-      if (purchase_cost != null) 'purchase_cost': purchase_cost,
-      if (transport_cost != null) 'transport_cost': transport_cost,
+      'quantity_received': ?quantityReceived,
+      'purchase_cost': ?purchaseCost,
+      'transport_cost': ?transportCost,
     });
 
     if (result['success'] == true) {
@@ -49,16 +49,16 @@ class ProductRepository {
     String? category,
     String? color,
     double? salePrice,
-    String? batch_id,
-    double? transport_cost,
+    String? batchId,
+    double? transportCost,
   }) async {
     final Map<String, dynamic> body = {};
     if (name != null) body['name'] = name;
     if (category != null) body['category'] = category;
     if (color != null) body['color'] = color;
     if (salePrice != null) body['selling_price'] = salePrice;
-    if (batch_id != null) body['batch_id'] = batch_id;
-    if (transport_cost != null) body['transport_cost'] = transport_cost;
+    if (batchId != null) body['batch_id'] = batchId;
+    if (transportCost != null) body['transport_cost'] = transportCost;
 
     final result = await ApiService.put('/products/$id', body);
 

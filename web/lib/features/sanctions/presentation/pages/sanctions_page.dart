@@ -112,7 +112,7 @@ class _SanctionsPageState extends State<SanctionsPage> with SingleTickerProvider
       builder: (ctx) => StatefulBuilder(builder: (ctx, setS) => Dialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
+        child: SizedBox(
           width: 480,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Container(
@@ -177,11 +177,15 @@ class _SanctionsPageState extends State<SanctionsPage> with SingleTickerProvider
                       body: json.encode({'employee_id': selectedEmployee['id'], 'reason': finalReason}),
                     );
                     if (r.statusCode == 201) {
-                      if (ctx.mounted) Navigator.pop(ctx);
+                      if (ctx.mounted) {
+                        Navigator.pop(ctx);
+                      }
                       _loadAll();
-                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Sanction enregistrée'), backgroundColor: Colors.green),
-                      );
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Sanction enregistrée'), backgroundColor: Colors.green),
+                        );
+                      }
                     }
                   } catch (_) {}
                   if (ctx.mounted) setS(() => submitting = false);

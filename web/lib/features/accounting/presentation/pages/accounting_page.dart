@@ -1,4 +1,4 @@
-import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -90,18 +90,19 @@ class _AccountingPageState extends State<AccountingPage> {
   }
 
   void _showFundCaisseDialog() {
-    final _amountCtrl = TextEditingController();
-    final _noteCtrl = TextEditingController();
+    final amountCtrl = TextEditingController();
+    final noteCtrl = TextEditingController();
+    bool loading = false;
+    String err = '';
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDlgState) {
-          bool loading = false;
-          String err = '';
           return Dialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            child: Container(
+            child: SizedBox(
               width: MediaQuery.of(ctx).size.width > 550 ? 500 : MediaQuery.of(ctx).size.width * 0.95,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -134,7 +135,7 @@ class _AccountingPageState extends State<AccountingPage> {
                             child: Text(err, style: TextStyle(color: Colors.red.shade700)),
                           ),
                         TextFormField(
-                          controller: _amountCtrl,
+                          controller: amountCtrl,
                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(
                             labelText: 'Montant à ajouter (GNF)',
@@ -148,7 +149,7 @@ class _AccountingPageState extends State<AccountingPage> {
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
-                          controller: _noteCtrl,
+                          controller: noteCtrl,
                           decoration: InputDecoration(
                             labelText: 'Note (optionnel)',
                             prefixIcon: const Icon(Icons.note_alt_outlined, color: AppColors.navyBlue),
@@ -177,7 +178,7 @@ class _AccountingPageState extends State<AccountingPage> {
                           label: const Text('Confirmer', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                           style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0A7C48), padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14)),
                           onPressed: loading ? null : () async {
-                            final amount = double.tryParse(_amountCtrl.text);
+                            final amount = double.tryParse(amountCtrl.text);
                             if (amount == null || amount <= 0) {
                               setDlgState(() => err = 'Veuillez entrer un montant valide.');
                               return;
@@ -186,10 +187,10 @@ class _AccountingPageState extends State<AccountingPage> {
                             try {
                               final res = await ApiService.post('/accounting/fund-cash', {
                                 'amount': amount,
-                                'note': _noteCtrl.text.isNotEmpty ? _noteCtrl.text : 'Alimentation manuelle de caisse',
+                                'note': noteCtrl.text.isNotEmpty ? noteCtrl.text : 'Alimentation manuelle de caisse',
                               });
                               if (res['success'] == true) {
-                                Navigator.pop(ctx);
+                                if (ctx.mounted) Navigator.pop(ctx);
                                 _fetchFinancialData();
                               } else {
                                 setDlgState(() { err = res['message'] ?? 'Erreur.'; loading = false; });
@@ -393,7 +394,7 @@ class _AccountingPageState extends State<AccountingPage> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: _expensesByCategory.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
+      separatorBuilder: (context, index) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final cat = _expensesByCategory[index];
         return ListTile(
@@ -412,7 +413,7 @@ class _AccountingPageState extends State<AccountingPage> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: _recentExpenses.length > 5 ? 5 : _recentExpenses.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
+      separatorBuilder: (context, index) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final exp = _recentExpenses[index];
         return ListTile(
@@ -468,7 +469,7 @@ class _NewExpenseDialogState extends State<_NewExpenseDialog> {
       });
 
       if (res['success'] == true) {
-        Navigator.of(context).pop();
+        if (mounted) Navigator.of(context).pop();
         widget.onSuccess();
       } else {
         String errMsg;
@@ -498,7 +499,7 @@ class _NewExpenseDialogState extends State<_NewExpenseDialog> {
 
   @override
   Widget build(BuildContext context) {
-    InputDecoration _buildInputDecoration(String label, IconData icon) {
+    InputDecoration buildInputDecoration(String label, IconData icon) {
       return InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14),
@@ -514,7 +515,7 @@ class _NewExpenseDialogState extends State<_NewExpenseDialog> {
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Container(
+      child: SizedBox(
         width: MediaQuery.of(context).size.width > 650 ? 600 : MediaQuery.of(context).size.width * 0.95,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -550,15 +551,15 @@ class _NewExpenseDialogState extends State<_NewExpenseDialog> {
                           child: Text(_error, style: TextStyle(color: Colors.red.shade700)),
                         ),
                       DropdownButtonFormField<String>(
-                        value: _selectedCategory,
-                        decoration: _buildInputDecoration('Catégorie', Icons.category),
+                        initialValue: _selectedCategory,
+                        decoration: buildInputDecoration('Catégorie', Icons.category),
                         items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                         onChanged: (val) => setState(() => _selectedCategory = val!),
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _amountController,
-                        decoration: _buildInputDecoration('Montant (GNF)', Icons.money),
+                        decoration: buildInputDecoration('Montant (GNF)', Icons.money),
                         keyboardType: TextInputType.number,
                         validator: (val) {
                           if (val == null || val.isEmpty) return 'Requis';
@@ -569,7 +570,7 @@ class _NewExpenseDialogState extends State<_NewExpenseDialog> {
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _descController,
-                        decoration: _buildInputDecoration('Description claire', Icons.description),
+                        decoration: buildInputDecoration('Description claire', Icons.description),
                         validator: (val) => val == null || val.isEmpty ? 'Requis' : null,
                       ),
                     ],

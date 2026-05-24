@@ -131,7 +131,7 @@ class _AuditPageState extends State<AuditPage> {
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
+        child: SizedBox(
           width: MediaQuery.of(context).size.width > 550 ? 500 : MediaQuery.of(context).size.width * 0.95,
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -486,7 +486,7 @@ class _AuditPageState extends State<AuditPage> {
           Expanded(
             child: ListView.separated(
               itemCount: _logs.length,
-              separatorBuilder: (_, __) => const Divider(height: 1, indent: 20, endIndent: 20),
+              separatorBuilder: (context, index) => const Divider(height: 1, indent: 20, endIndent: 20),
               itemBuilder: (context, i) => _buildLogRow(_logs[i]),
             ),
           ),

@@ -56,6 +56,7 @@ class _AuthScreenState extends State<AuthScreen> {
           _passwordController.text,
         );
 
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Compte administrateur créé avec succès !'),
@@ -149,7 +150,7 @@ class _AuthScreenState extends State<AuthScreen> {
               width: 400,
               height: 400,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.03),
+                color: Colors.white.withValues(alpha: 0.03),
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -175,7 +176,7 @@ class _AuthScreenState extends State<AuthScreen> {
               width: 300,
               height: 300,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.03),
+                color: Colors.white.withValues(alpha: 0.03),
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -492,7 +493,7 @@ class _AuthScreenState extends State<AuthScreen> {
     return Container(
       height: 64,
       decoration: BoxDecoration(
-        color: const Color(0xFFE5E5E5).withOpacity(0.1), // Light Gray semi-transparent
+        color: const Color(0xFFE5E5E5).withValues(alpha: 0.1), // Light Gray semi-transparent
         borderRadius: BorderRadius.circular(32),
       ),
       child: Stack(
@@ -511,7 +512,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   hintText: hint,
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                  hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
                   border: InputBorder.none,
                 ),
                 validator: (value) => value!.isEmpty ? 'Requis' : null,

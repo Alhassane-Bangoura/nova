@@ -141,16 +141,16 @@ class _ChinaPurchasesPageState extends State<ChinaPurchasesPage> {
   }
 
   void _showAddPurchaseDialog() {
-    final _formKey = GlobalKey<FormState>();
+    final formKey = GlobalKey<FormState>();
     String productName = '';
     String supplier = '';
     int quantity = 0;
     double unitCost = 0;
     double transportCost = 0;
     DateTime orderDate = DateTime.now();
-    TextEditingController _dateController = TextEditingController(text: DateFormat('dd/MM/yyyy').format(orderDate));
+    TextEditingController dateController = TextEditingController(text: DateFormat('dd/MM/yyyy').format(orderDate));
 
-    InputDecoration _buildInputDecoration(String label, IconData icon) {
+    InputDecoration buildInputDecoration(String label, IconData icon) {
       return InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14),
@@ -168,7 +168,7 @@ class _ChinaPurchasesPageState extends State<ChinaPurchasesPage> {
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
+        child: SizedBox(
         width: MediaQuery.of(context).size.width > 650 ? 600 : MediaQuery.of(context).size.width * 0.95,
         child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -192,7 +192,7 @@ class _ChinaPurchasesPageState extends State<ChinaPurchasesPage> {
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(24),
                   child: Form(
-                    key: _formKey,
+                    key: formKey,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -211,7 +211,7 @@ class _ChinaPurchasesPageState extends State<ChinaPurchasesPage> {
                             return TextFormField(
                               controller: fieldTextEditingController,
                               focusNode: fieldFocusNode,
-                              decoration: _buildInputDecoration('Nom du Produit (existant ou nouveau)', Icons.inventory_2_outlined),
+                              decoration: buildInputDecoration('Nom du Produit (existant ou nouveau)', Icons.inventory_2_outlined),
                               validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
                               onSaved: (v) {
                                 if (v != null && v.isNotEmpty) {
@@ -223,29 +223,29 @@ class _ChinaPurchasesPageState extends State<ChinaPurchasesPage> {
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
-                          decoration: _buildInputDecoration('Fournisseur (ex: Alibaba)', Icons.business_outlined),
+                          decoration: buildInputDecoration('Fournisseur (ex: Alibaba)', Icons.business_outlined),
                           validator: (v) => v!.isEmpty ? 'Requis' : null,
                           onSaved: (v) => supplier = v!,
                         ),
                         const SizedBox(height: 16),
                         Row(
                           children: [
-                            Expanded(child: TextFormField(decoration: _buildInputDecoration('Quantité', Icons.numbers), keyboardType: TextInputType.number, validator: (v) => v!.isEmpty ? 'Requis' : null, onSaved: (v) => quantity = int.parse(v!))),
+                            Expanded(child: TextFormField(decoration: buildInputDecoration('Quantité', Icons.numbers), keyboardType: TextInputType.number, validator: (v) => v!.isEmpty ? 'Requis' : null, onSaved: (v) => quantity = int.parse(v!))),
                             const SizedBox(width: 16),
-                            Expanded(child: TextFormField(decoration: _buildInputDecoration('Coût Unitaire (GNF)', Icons.payments), keyboardType: TextInputType.number, validator: (v) => v!.isEmpty ? 'Requis' : null, onSaved: (v) => unitCost = double.parse(v!))),
+                            Expanded(child: TextFormField(decoration: buildInputDecoration('Coût Unitaire (GNF)', Icons.payments), keyboardType: TextInputType.number, validator: (v) => v!.isEmpty ? 'Requis' : null, onSaved: (v) => unitCost = double.parse(v!))),
                           ],
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
-                          decoration: _buildInputDecoration('Frais de Transitaire (GNF)', Icons.local_shipping_outlined),
+                          decoration: buildInputDecoration('Frais de Transitaire (GNF)', Icons.local_shipping_outlined),
                           keyboardType: TextInputType.number,
                           onSaved: (v) => transportCost = v!.isEmpty ? 0 : double.parse(v),
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
-                          controller: _dateController,
+                          controller: dateController,
                           readOnly: true,
-                          decoration: _buildInputDecoration('Date de Commande', Icons.calendar_today),
+                          decoration: buildInputDecoration('Date de Commande', Icons.calendar_today),
                           onTap: () async {
                             final DateTime? picked = await showDatePicker(
                               context: context,
@@ -255,7 +255,7 @@ class _ChinaPurchasesPageState extends State<ChinaPurchasesPage> {
                             );
                             if (picked != null && picked != orderDate) {
                               orderDate = picked;
-                              _dateController.text = DateFormat('dd/MM/yyyy').format(picked);
+                              dateController.text = DateFormat('dd/MM/yyyy').format(picked);
                             }
                           },
                         ),
@@ -273,8 +273,8 @@ class _ChinaPurchasesPageState extends State<ChinaPurchasesPage> {
                     const SizedBox(width: 12),
                     ElevatedButton(
                       onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          _formKey.currentState!.save();
+                        if (formKey.currentState!.validate()) {
+                          formKey.currentState!.save();
                           _createPurchase({
                             'productName': productName,
                             'supplier': supplier,

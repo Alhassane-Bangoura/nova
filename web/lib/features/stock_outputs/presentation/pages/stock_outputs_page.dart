@@ -503,7 +503,7 @@ class _NewOutputDialogState extends State<NewOutputDialog> {
     return Dialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Container(
+      child: SizedBox(
         width: MediaQuery.of(context).size.width > 650 ? 600 : MediaQuery.of(context).size.width * 0.95,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -547,7 +547,7 @@ class _NewOutputDialogState extends State<NewOutputDialog> {
                               items: _products.map((p) {
                                 final name = p['name']?.toString() ?? '';
                                 final isCasque = name.toLowerCase().contains('casque');
-                                final label = isCasque ? name : '${name}${p['color'] != null ? " - ${p['color']}" : ""}';
+                                final label = isCasque ? name : '$name${p['color'] != null ? " - ${p['color']}" : ""}';
                                 return DropdownMenuItem(value: p, child: Text(label));
                               }).toList(),
                               onChanged: (val) {
