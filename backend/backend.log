@@ -1,0 +1,14 @@
+
+> backend@1.0.0 start
+> node src/app.js
+
+
+===========================================
+🚀 Nova genix Digital Backend Engine Démarré (Port 3000)
+🛡️  Architecture: Clean Architecture + Transactions
+💾 Base de données locale: enterprise.db
+===========================================
+
+✅ Base de données ERP (enterprise.db) connectée.
+🛡️ Intégrité Référentielle (Foreign Keys) activée.
+⚡ Mode WAL activé (Performances Maximales).

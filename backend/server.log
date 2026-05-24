@@ -1,0 +1,10 @@
+
+===========================================
+🚀 Nova genix Digital Backend Engine Démarré (Port 3000)
+🛡️  Architecture: Clean Architecture + Transactions
+💾 Base de données locale: enterprise.db
+===========================================
+
+✅ Base de données ERP (enterprise.db) connectée.
+⚡ Mode WAL activé (Performances Maximales).
+🛡️ Intégrité Référentielle (Foreign Keys) activée.

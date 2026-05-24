@@ -1,0 +1,21 @@
+Analyzing web...                                                
+
+warning • Unused import: 'dart:convert' • lib/features/accounting/presentation/pages/accounting_page.dart:1:8 • unused_import
+   info • Unnecessary use of multiple underscores • lib/features/accounting/presentation/pages/accounting_page.dart:256:29 • unnecessary_underscores
+   info • Unnecessary use of multiple underscores • lib/features/accounting/presentation/pages/accounting_page.dart:275:29 • unnecessary_underscores
+   info • Don't use 'BuildContext's across async gaps • lib/features/accounting/presentation/pages/accounting_page.dart:333:22 • use_build_context_synchronously
+   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre • lib/features/accounting/presentation/pages/accounting_page.dart:368:17 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps • lib/features/auth/presentation/pages/auth_page.dart:59:30 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/auth/presentation/pages/auth_page.dart:152:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/auth/presentation/pages/auth_page.dart:178:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/auth/presentation/pages/auth_page.dart:481:40 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/auth/presentation/pages/auth_page.dart:500:60 • deprecated_member_use
+   info • Statements in an if should be enclosed in a block • lib/features/dashboard/presentation/pages/dashboard_view.dart:490:7 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/dashboard/presentation/pages/dashboard_view.dart:526:7 • curly_braces_in_flow_control_structures
+   info • Use the null-aware marker '?' rather than a null check via an 'if' • lib/features/products/data/repositories/product_repository.dart:28:7 • use_null_aware_elements
+   info • Unnecessary use of multiple underscores • lib/features/products/presentation/pages/products_page.dart:249:37 • unnecessary_underscores
+   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre • lib/features/products/presentation/pages/products_page.dart:466:17 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/splash/presentation/pages/splash_page.dart:67:37 • deprecated_member_use
+warning • Unused import: 'features/splash/presentation/pages/splash_page.dart' • lib/main.dart:3:8 • unused_import
+   info • Unnecessary use of multiple underscores • lib/main.dart:21:43 • unnecessary_underscores
+
