@@ -58,7 +58,7 @@ Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignorever
 Source: "C:\Windows\System32\vcruntime140.dll"; DestDir: "{app}"; Flags: external skipifsourcedoesntexist
 Source: "C:\Windows\System32\msvcp140.dll"; DestDir: "{app}"; Flags: external skipifsourcedoesntexist
 Source: "C:\Windows\System32\vcruntime140_1.dll"; DestDir: "{app}"; Flags: external skipifsourcedoesntexist
-Source: "windows\runner\resources\logo_sauve.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "windows\runner\resources\app_icon.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"; WorkingDir: "{app}"
@@ -85,7 +85,7 @@ Type: filesandordirs; Name: "{localappdata}\{#AppPublisher}\{#AppName}"
 [Registry]
 Root: HKCR; Subkey: ".nova"; ValueType: string; ValueName: ""; ValueData: "NovaGenix.DataFile"; Flags: uninsdeletevalue
 Root: HKCR; Subkey: "NovaGenix.DataFile"; ValueType: string; ValueName: ""; ValueData: "Données Nova Genix"; Flags: uninsdeletekey
-Root: HKCR; Subkey: "NovaGenix.DataFile\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\logo_sauve.ico"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "NovaGenix.DataFile\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\app_icon.ico"; Flags: uninsdeletekey
 Root: HKCR; Subkey: "NovaGenix.DataFile\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""; Flags: uninsdeletekey
 
 [Code]
