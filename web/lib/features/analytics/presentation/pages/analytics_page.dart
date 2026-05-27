@@ -391,8 +391,40 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                 ),
                 borderData: FlBorderData(show: false),
                 lineBarsData: [
-                  LineChartBarData(spots: revSpots, isCurved: true, color: Colors.green, barWidth: 3, dotData: const FlDotData(show: false)),
-                  LineChartBarData(spots: profSpots, isCurved: true, color: AppColors.gold, barWidth: 3, dotData: const FlDotData(show: false)),
+                  LineChartBarData(
+                    spots: revSpots,
+                    isCurved: true,
+                    curveSmoothness: 0.5,
+                    preventCurveOverShooting: true,
+                    color: Colors.green,
+                    barWidth: 3,
+                    dotData: const FlDotData(show: false),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      gradient: LinearGradient(
+                        colors: [Colors.green.withValues(alpha: 0.18), Colors.green.withValues(alpha: 0.0)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                  LineChartBarData(
+                    spots: profSpots,
+                    isCurved: true,
+                    curveSmoothness: 0.5,
+                    preventCurveOverShooting: true,
+                    color: AppColors.gold,
+                    barWidth: 3,
+                    dotData: const FlDotData(show: false),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      gradient: LinearGradient(
+                        colors: [AppColors.gold.withValues(alpha: 0.15), AppColors.gold.withValues(alpha: 0.0)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
