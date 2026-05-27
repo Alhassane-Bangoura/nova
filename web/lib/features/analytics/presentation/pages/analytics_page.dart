@@ -27,13 +27,31 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   
   DateTime _startDate = DateTime.now().subtract(const Duration(days: 7));
   DateTime _endDate = DateTime.now();
+  String _selectedProductId = 'all';
+  List<dynamic> _products = [];
 
   Map<String, dynamic>? _data;
 
   @override
   void initState() {
     super.initState();
+    _fetchProducts();
     _loadData();
+  }
+
+  Future<void> _fetchProducts() async {
+    try {
+      final res = await http.get(Uri.parse('$_baseUrl/products'));
+      if (res.statusCode == 200) {
+        if (mounted) {
+          setState(() {
+            _products = json.decode(res.body)['data'];
+          });
+        }
+      }
+    } catch (e) {
+      // Ignore
+    }
   }
 
   Future<void> _loadData() async {
@@ -46,7 +64,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       final s = DateFormat('yyyy-MM-dd').format(_startDate);
       final e = DateFormat('yyyy-MM-dd').format(_endDate);
       
-      final r = await http.get(Uri.parse('$_baseUrl/analytics/dashboard?startDate=$s&endDate=$e'));
+      final r = await http.get(Uri.parse('$_baseUrl/analytics/dashboard?startDate=$s&endDate=$e&productId=$_selectedProductId'));
       if (r.statusCode == 200) {
         final d = json.decode(r.body);
         if (mounted) {
@@ -189,6 +207,37 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   Widget _buildDateSelector() {
     return Row(
       children: [
+        // Product Dropdown
+        Container(
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedProductId,
+              icon: const Icon(Icons.arrow_drop_down, color: AppColors.navyBlue),
+              style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppColors.navyBlue),
+              items: [
+                const DropdownMenuItem(value: 'all', child: Text('Tous les produits')),
+                ..._products.map((p) => DropdownMenuItem(
+                  value: p['id'].toString(),
+                  child: Text(p['name'].toString()),
+                )),
+              ],
+              onChanged: (val) {
+                if (val != null) {
+                  setState(() => _selectedProductId = val);
+                  _loadData();
+                }
+              },
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
         TextButton(
           onPressed: () => _setPreset(7),
           child: const Text('7 Jours', style: TextStyle(color: AppColors.navyBlue)),
@@ -201,7 +250,8 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
           onTap: () => _selectDateRange(context),
           borderRadius: BorderRadius.circular(8),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            height: 40,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: Colors.white,
               border: Border.all(color: Colors.grey.shade300),
@@ -306,6 +356,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 30,
+                      interval: evol.length > 5 ? (evol.length / 5).ceilToDouble() : 1,
                       getTitlesWidget: (val, meta) {
                         final index = val.toInt();
                         if (index < 0 || index >= evol.length) return const SizedBox.shrink();
@@ -350,9 +401,9 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _legendItem(Colors.green, 'Chiffre d\'Affaires'),
+              Expanded(child: _legendItem(Colors.green, 'Chiffre d\'Affaires')),
               const SizedBox(width: 24),
-              _legendItem(AppColors.gold, 'Bénéfice'),
+              Expanded(child: _legendItem(AppColors.gold, 'Bénéfice')),
             ],
           ),
         ],
@@ -493,11 +544,12 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
 
   Widget _legendItem(Color c, String text, [double? amount]) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
       children: [
         Container(width: 12, height: 12, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
         const SizedBox(width: 8),
-        Text(text, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey.shade700)),
+        Expanded(
+          child: Text(text, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey.shade700), overflow: TextOverflow.ellipsis),
+        ),
         if (amount != null) ...[
           const SizedBox(width: 8),
           Text(_fmt(amount), style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.black87)),

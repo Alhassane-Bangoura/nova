@@ -59,10 +59,10 @@ class ErpSidebar extends StatelessWidget {
               children: [
                 _buildNavItem(0, Icons.dashboard_outlined, 'Tableau de Bord'),
                 // L'onglet Produits (1) a été supprimé à la demande du client
-                // L'entrée se gère via "Achats Chine" et la sortie via "Sorties Produits"
+                // L'entrée se gère via "Achats Chine" et la sortie via "Ventes"
                 _buildNavItem(2, Icons.warehouse_outlined, 'Stock'),
-                _buildNavItem(3, Icons.outbox_outlined, 'Sorties Produits'),
-                _buildNavItem(4, Icons.flight_land, 'Achats Chine'),
+                _buildNavItem(3, Icons.outbox_outlined, 'Ventes'),
+                _buildNavItem(4, Icons.flight_land, 'Commandes'),
                 _buildNavItem(5, Icons.receipt_long_outlined, 'Dépenses'),
 
                 _buildNavItem(7, Icons.gavel_outlined, 'Sanctions'),

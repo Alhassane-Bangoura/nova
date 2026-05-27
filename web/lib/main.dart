@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'features/splash/presentation/pages/splash_page.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'features/dashboard/presentation/pages/dashboard_page.dart';
 
 // Global Theme Notifier
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
@@ -53,7 +54,7 @@ class NovaApp extends StatelessWidget {
               ThemeData(brightness: Brightness.dark).textTheme,
             ),
           ),
-          home: const SplashScreen(), // Activé le flux d'authentification
+          home: const DashboardPage(), // Temporarily bypass login
         );
       },
     );

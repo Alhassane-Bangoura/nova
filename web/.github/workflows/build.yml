@@ -1,4 +1,4 @@
-name: Windows Build & Deploy
+name: Nova Genix - Windows Build
 
 on:
   push:
@@ -8,37 +8,47 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
+
     steps:
-      - uses: actions/checkout@v4
-      
-      - uses: subosito/flutter-action@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.41.2'
           channel: stable
+          cache: true
 
-      - name: Create .env
-        shell: pwsh
-        run: |
-          "NOVA_API_URL=${{ secrets.NOVA_API_URL }}" | Out-File -FilePath .env -Encoding utf8
-
-      - name: Clean build
-        run: flutter clean
+      - name: Enable Windows Desktop
+        run: flutter config --enable-windows-desktop
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build Windows
+      - name: Create .env file
+        shell: pwsh
+        run: |
+          $content = "NOVA_API_URL=${{ secrets.NOVA_API_URL }}"
+          Set-Content -Path .env -Value $content -Encoding UTF8
+
+      - name: Run Flutter Analyze
+        run: flutter analyze --no-fatal-warnings
+
+      - name: Build Windows Release
         run: flutter build windows --release
 
       - name: Install Inno Setup
-        run: choco install innosetup -y
+        run: choco install innosetup -y --no-progress
 
-      - name: Build Setup.exe
+      - name: Build Installer (.exe)
         shell: pwsh
         run: |
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "installer.iss"
 
-      - name: Upload Installer
+      - name: Upload Windows Installer
         uses: actions/upload-artifact@v4
         with:
-          name: windows-installer
+          name: NovaGenix-Windows-Installer
           path: Output/*.exe
+          retention-days: 30

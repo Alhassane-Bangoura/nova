@@ -27,6 +27,9 @@ class _AuditPageState extends State<AuditPage> {
 
   // Cache simple pour éviter rechargements inutiles
   String? _lastQueryKey;
+  
+  List<dynamic> _products = [];
+  String? _selectedProductName;
 
   final Map<String, Map<String, dynamic>> _typeConfig = {
     'ALL':      {'label': 'Tous',        'icon': Icons.history,              'color': Colors.blueGrey},
@@ -39,10 +42,20 @@ class _AuditPageState extends State<AuditPage> {
   @override
   void initState() {
     super.initState();
+    _fetchProducts();
     _loadData();
     _searchController.addListener(() {
       if (mounted) setState(() {});
     });
+  }
+
+  Future<void> _fetchProducts() async {
+    try {
+      final r = await http.get(Uri.parse('http://localhost:3000/api/products'));
+      if (r.statusCode == 200) {
+        if (mounted) setState(() { _products = json.decode(r.body)['data'] ?? []; });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -54,7 +67,7 @@ class _AuditPageState extends State<AuditPage> {
   String _buildQueryKey() {
     final s = DateFormat('yyyy-MM-dd').format(_startDate);
     final e = DateFormat('yyyy-MM-dd').format(_endDate);
-    return '$s|$e|$_selectedType|${_searchController.text.trim()}';
+    return '$s|$e|$_selectedType|${_searchController.text.trim()}|$_selectedProductName';
   }
 
   Future<void> _loadData() async {
@@ -66,7 +79,7 @@ class _AuditPageState extends State<AuditPage> {
       final s = DateFormat('yyyy-MM-dd').format(_startDate);
       final e = DateFormat('yyyy-MM-dd').format(_endDate);
       final type = _selectedType == 'ALL' ? '' : _selectedType;
-      final search = _searchController.text.trim();
+      final search = _selectedProductName ?? _searchController.text.trim();
 
       final uri = Uri.parse('$_auditBaseUrl/audit?startDate=$s&endDate=$e&actionType=$type&search=$search');
       final r = await http.get(uri).timeout(const Duration(seconds: 5));
@@ -364,9 +377,39 @@ class _AuditPageState extends State<AuditPage> {
   Widget _buildFilters() {
     return Row(
       children: [
+        Container(
+          width: 220,
+          margin: const EdgeInsets.only(right: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedProductName,
+              hint: const Text('Tous les produits'),
+              isExpanded: true,
+              icon: const Icon(Icons.arrow_drop_down, color: AppColors.navyBlue),
+              items: [
+                const DropdownMenuItem<String>(value: null, child: Text('Tous les produits')),
+                ..._products.map((p) => DropdownMenuItem<String>(
+                  value: p['name'].toString(),
+                  child: Text(p['name'].toString(), overflow: TextOverflow.ellipsis),
+                )),
+              ],
+              onChanged: (val) {
+                setState(() { _selectedProductName = val; _searchController.clear(); });
+                _loadData();
+              },
+            ),
+          ),
+        ),
         Expanded(
           child: TextField(
             controller: _searchController,
+            enabled: _selectedProductName == null,
             decoration: InputDecoration(
               hintText: 'Rechercher par description, employé, module...',
               prefixIcon: const Icon(Icons.search, color: Colors.grey),

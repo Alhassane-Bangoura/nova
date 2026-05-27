@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/erp_stat_card.dart';
+import '../../../products/data/models/product_model.dart';
+import '../../../products/data/repositories/product_repository.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -27,9 +29,14 @@ class _DashboardViewState extends State<DashboardView> {
   List<dynamic> _topLocations = [];
   // ignore: unused_field
   List<dynamic> _financialEvolution = [];
-
   // Cache: don't reload if data is less than 60 seconds old
   DateTime? _lastLoadTime;
+
+  final ProductRepository _productRepo = ProductRepository();
+  List<ProductModel> _products = [];
+  ProductModel? _selectedProduct;
+  double _globalTotalProfit = 0;
+  double _globalTotalExpenses = 0;
 
   @override
   void initState() {
@@ -58,8 +65,22 @@ class _DashboardViewState extends State<DashboardView> {
       if (response.statusCode == 200) {
         final decoded = json.decode(response.body);
         if (decoded['success'] == true) {
+          final prods = await _productRepo.getAllProducts();
+          double totalP = 0;
+          double totalE = 0;
+          for (var p in prods) {
+            final double tE = p.stockQuantity * p.unitCostReal;
+            final double tR = p.stockQuantity * p.salePrice;
+            final double tP = tR - tE;
+            totalE += tE;
+            totalP += tP;
+          }
+
           _lastLoadTime = DateTime.now();
           setState(() {
+            _products = prods;
+            _globalTotalProfit = totalP;
+            _globalTotalExpenses = totalE;
             _kpis = decoded['data']['kpis'];
             _recentOutputs = decoded['data']['tables']['recentOutputs'];
             _lowStockAlerts = decoded['data']['alerts']['lowStockProducts'] ?? [];
@@ -127,6 +148,8 @@ class _DashboardViewState extends State<DashboardView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader(isDark),
+          const SizedBox(height: 16),
+          _buildProductFilter(isDark), // Product Filter Dropdown
           const SizedBox(height: 24),
           _buildKpiSection(), // PRIORITÉ 1: KPIs
           const SizedBox(height: 24),
@@ -217,6 +240,14 @@ class _DashboardViewState extends State<DashboardView> {
   }
 
   Widget _buildKpiSection() {
+    final double displayProfit = _selectedProduct != null
+        ? ((_selectedProduct!.stockQuantity * _selectedProduct!.salePrice) - (_selectedProduct!.stockQuantity * _selectedProduct!.unitCostReal)).toDouble()
+        : _globalTotalProfit;
+
+    final double displayExpenses = _selectedProduct != null
+        ? (_selectedProduct!.stockQuantity * _selectedProduct!.unitCostReal).toDouble()
+        : _globalTotalExpenses;
+
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -233,21 +264,21 @@ class _DashboardViewState extends State<DashboardView> {
         const SizedBox(width: 16),
         Expanded(
           child: ErpStatCard(
-            title: 'Bénéfice (Jour)',
-            value: _formatCurrency(_kpis['dailyProfit']),
+            title: 'Bénéfice Total',
+            value: _formatCurrency(displayProfit),
             icon: Icons.trending_up,
             color: AppColors.navyBlue,
-            subtitle: 'Profit net du jour',
+            subtitle: _selectedProduct != null ? 'Bénéfice du produit' : 'Bénéfice de tout le stock',
           ),
         ),
         const SizedBox(width: 16),
         Expanded(
           child: ErpStatCard(
-            title: 'Dépenses (Jour)',
-            value: _formatCurrency(_kpis['dailyExpenses']),
+            title: 'Dépenses Totales',
+            value: _formatCurrency(displayExpenses),
             icon: Icons.receipt_long_outlined,
             color: AppColors.gold,
-            subtitle: 'Charges du jour',
+            subtitle: _selectedProduct != null ? 'Dépense du produit' : 'Coût total du stock',
           ),
         ),
         const SizedBox(width: 16),
@@ -274,6 +305,42 @@ class _DashboardViewState extends State<DashboardView> {
     ),
   );
 }
+
+  Widget _buildProductFilter(bool isDark) {
+    return Container(
+      width: 400,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.navyBlue : Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<ProductModel>(
+          isExpanded: true,
+          value: _selectedProduct,
+          hint: const Text('Sélectionner un produit (Filtre Global)'),
+          icon: const Icon(Icons.arrow_drop_down, color: AppColors.gold),
+          dropdownColor: isDark ? AppColors.navyBlue : Colors.white,
+          items: [
+            const DropdownMenuItem<ProductModel>(
+              value: null,
+              child: Text('Tous les produits (Stock Global)', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            ..._products.map((p) => DropdownMenuItem(
+                  value: p,
+                  child: Text('${p.name}${(p.color != null && p.color != "Unique") ? " (${p.color!})" : ""}'),
+                )),
+          ],
+          onChanged: (val) {
+            setState(() {
+              _selectedProduct = val;
+            });
+          },
+        ),
+      ),
+    );
+  }
 
   // PRIORITÉ 2: Alertes Business Critiques
   Widget _buildCriticalAlerts(bool isDark) {

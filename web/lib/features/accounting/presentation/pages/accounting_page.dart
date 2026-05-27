@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/erp_stat_card.dart';
+import '../../../products/data/models/product_model.dart';
+import '../../../products/data/repositories/product_repository.dart';
 
 class AccountingPage extends StatefulWidget {
   const AccountingPage({super.key});
@@ -22,6 +24,10 @@ class _AccountingPageState extends State<AccountingPage> {
   List<dynamic> _expensesByCategory = [];
   List<dynamic> _recentExpenses = [];
 
+  final ProductRepository _productRepo = ProductRepository();
+  List<ProductModel> _products = [];
+  ProductModel? _selectedProduct;
+
   @override
   void initState() {
     super.initState();
@@ -34,14 +40,17 @@ class _AccountingPageState extends State<AccountingPage> {
       _errorMessage = '';
     });
     try {
-      final accRes = await ApiService.get('/accounting/dashboard');
+      final productIdParam = _selectedProduct != null ? '?productId=${_selectedProduct!.id}' : '';
+      final accRes = await ApiService.get('/accounting/dashboard$productIdParam');
       final expRes = await ApiService.get('/expenses');
 
       if (accRes['success'] == true && expRes['success'] == true) {
         final accData = accRes['data']['data'];
         final expData = expRes['data']['data'];
+        final prods = _products.isEmpty ? await _productRepo.getAllProducts() : _products;
 
         setState(() {
+          _products = prods;
           _profitSummary = accData['profitSummary'] ?? {};
           _cashHistory = accData['cashHistory'] ?? [];
           _expensesByCategory = accData['expensesByCategory'] ?? [];
@@ -218,6 +227,8 @@ class _AccountingPageState extends State<AccountingPage> {
     if (_errorMessage.isNotEmpty) return Center(child: Text(_errorMessage, style: const TextStyle(color: Colors.red)));
 
     final currentCash = _cashHistory.isNotEmpty ? _cashHistory.first['balance_after'] : 0;
+    
+    // Calculate KPIs dynamically based on selected product
     final grossProfit = _profitSummary['gross_profit'] ?? 0;
     final totalExpenses = _profitSummary['total_expenses'] ?? 0;
     final netProfit = _profitSummary['net_profit'] ?? 0;
@@ -261,6 +272,40 @@ class _AccountingPageState extends State<AccountingPage> {
                 ],
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+          // Product Filter Dropdown
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.navyBlue : Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<ProductModel>(
+                value: _selectedProduct,
+                hint: const Text('Tous les produits'),
+                icon: const Icon(Icons.arrow_drop_down, color: AppColors.gold),
+                dropdownColor: isDark ? AppColors.navyBlue : Colors.white,
+                items: [
+                  const DropdownMenuItem<ProductModel>(
+                    value: null,
+                    child: Text('Tous les produits (Général)', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  ..._products.map((p) => DropdownMenuItem(
+                        value: p,
+                        child: Text(p.name),
+                      )),
+                ],
+                onChanged: (val) {
+                  setState(() {
+                    _selectedProduct = val;
+                  });
+                  _fetchFinancialData();
+                },
+              ),
+            ),
           ),
           const SizedBox(height: 24),
           _buildKpis(currentCash, grossProfit, totalExpenses, netProfit),
@@ -358,7 +403,7 @@ class _AccountingPageState extends State<AccountingPage> {
         columns: const [
           DataColumn(label: Text('Date')),
           DataColumn(label: Text('Type')),
-          DataColumn(label: Text('Origine')),
+          DataColumn(label: Text('Détails de l\'opération')),
           DataColumn(label: Text('Montant')),
           DataColumn(label: Text('Nouveau Solde')),
         ],
@@ -379,7 +424,17 @@ class _AccountingPageState extends State<AccountingPage> {
                 ),
               ),
             ),
-            DataCell(Text(trx['reference_type'].toString(), style: TextStyle(color: isDark ? Colors.grey.shade300 : null))),
+            DataCell(
+              SizedBox(
+                width: 200,
+                child: Text(
+                  trx['description']?.toString() ?? trx['reference_type'].toString(), 
+                  style: TextStyle(color: isDark ? Colors.grey.shade300 : Colors.black87, fontWeight: FontWeight.w500),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
             DataCell(Text(_formatCurrency(trx['amount']), style: TextStyle(color: isIncome ? Colors.green : Colors.red, fontWeight: FontWeight.bold))),
             DataCell(Text(_formatCurrency(trx['balance_after']), style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.navyBlue))),
           ]);
@@ -443,6 +498,18 @@ class _NewExpenseDialogState extends State<_NewExpenseDialog> {
   bool _isSubmitting = false;
   String _error = '';
 
+  final ProductRepository _productRepo = ProductRepository();
+  List<ProductModel> _products = [];
+  String? _selectedProductId; // null = dépense générale
+
+  @override
+  void initState() {
+    super.initState();
+    _productRepo.getAllProducts().then((prods) {
+      if (mounted) setState(() => _products = prods);
+    });
+  }
+
   final List<String> _categories = [
     'Connexion (Publicité)',
     'Connexion (Réception Msgs)',
@@ -466,6 +533,7 @@ class _NewExpenseDialogState extends State<_NewExpenseDialog> {
         'category': _selectedCategory,
         'amount': amount,
         'description': _descController.text,
+        if (_selectedProductId != null) 'productId': _selectedProductId,
       });
 
       if (res['success'] == true) {
@@ -555,6 +623,23 @@ class _NewExpenseDialogState extends State<_NewExpenseDialog> {
                         decoration: buildInputDecoration('Catégorie', Icons.category),
                         items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                         onChanged: (val) => setState(() => _selectedCategory = val!),
+                      ),
+                      const SizedBox(height: 16),
+                      // Dropdown: Affecter à un produit
+                      DropdownButtonFormField<String?>(
+                        initialValue: _selectedProductId,
+                        decoration: buildInputDecoration('Affecter à un Produit (optionnel)', Icons.inventory_2_outlined),
+                        items: [
+                          const DropdownMenuItem<String?>(
+                            value: null,
+                            child: Text('Dépense générale (non affectée)'),
+                          ),
+                          ..._products.map((p) => DropdownMenuItem<String?>(
+                            value: p.id,
+                            child: Text('${p.name}${(p.color != null && p.color != 'Unique') ? ' (${p.color!})' : ''}'),
+                          )),
+                        ],
+                        onChanged: (val) => setState(() => _selectedProductId = val),
                       ),
                       const SizedBox(height: 16),
                       TextFormField(

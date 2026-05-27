@@ -10,7 +10,7 @@ import 'package:printing/printing.dart';
 import '../../../../core/theme/app_colors.dart';
 
 // ─────────────────────────────────────────────────────────────
-// PAGE PRINCIPALE — SORTIES PRODUITS
+// PAGE PRINCIPALE — VENTES
 // ─────────────────────────────────────────────────────────────
 class StockOutputsPage extends StatefulWidget {
   const StockOutputsPage({super.key});
@@ -87,7 +87,7 @@ class _StockOutputsPageState extends State<StockOutputsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Sorties Produits',
+              'Ventes',
               style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.textDark),
             ),
             const SizedBox(height: 4),
@@ -552,8 +552,17 @@ class _NewOutputDialogState extends State<NewOutputDialog> {
                               }).toList(),
                               onChanged: (val) {
                                 setState(() { _selectedProduct = val; });
-                                if (val != null && val['selling_price'] != null) {
-                                  _priceCtrl.text = val['selling_price'].toString();
+                                if (val != null) {
+                                  // Auto-remplir le prix de vente
+                                  if (val['selling_price'] != null) {
+                                    _priceCtrl.text = val['selling_price'].toString();
+                                  }
+                                  // Auto-remplir la quantité avec le stock disponible
+                                  final rawStock = val['stock_quantity'] ?? val['current_stock'] ?? val['quantity'] ?? 0;
+                                  final int stock = num.tryParse(rawStock.toString())?.toInt() ?? 0;
+                                  if (stock > 0) {
+                                    _quantityCtrl.text = stock.toString();
+                                  }
                                 }
                               },
                               validator: (val) => val == null ? 'Champ requis' : null,

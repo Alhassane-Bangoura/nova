@@ -317,7 +317,7 @@ class _ProductsPageState extends State<ProductsPage> {
                 _tableHeader('Prix Vente (Base)', flex: 2),
                 _tableHeader('En Stock', flex: 2),
                 _tableHeader('Sortis', flex: 2),
-                _tableHeader('Actions', flex: 2),
+                const SizedBox(width: 24), // For the expansion arrow
               ],
             ),
           ),
@@ -326,7 +326,13 @@ class _ProductsPageState extends State<ProductsPage> {
             child: ListView.separated(
               separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade100),
               itemCount: _filtered.length,
-              itemBuilder: (context, index) => _buildProductRow(_filtered[index]),
+              itemBuilder: (context, index) => _ProductRowItem(
+                product: _filtered[index],
+                onEdit: () => _showEditProductDialog(context, _filtered[index]),
+                onDelete: () => _showDeleteProductDialog(context, _filtered[index]),
+                onPrint: () => _printProduct(_filtered[index]),
+                onPrintPdf: _printProductDetailsPdf,
+              ),
             ),
           ),
           // Footer (Nombre de résultats)
@@ -364,263 +370,9 @@ class _ProductsPageState extends State<ProductsPage> {
     );
   }
 
-  Widget _buildProductRow(ProductModel product) {
-    return InkWell(
-      onTap: () => _showProductDetails(context, product),
-      hoverColor: Colors.grey.shade50,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Row(
-          children: [
-            Expanded(
-              flex: 3,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    product.name,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                  ),
-                  if (product.color != null && product.color!.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        'Couleur: ${product.color}',
-                        style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                      ),
-                    ),
-                  ],
-                  if (product.stockQuantity <= 0 && product.stockEmptyAt != null) ...[
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade50,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.red.shade200)
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.warning_amber_rounded, size: 12, color: Colors.red.shade700),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Rupture ! Archivage auto dans ${3 - DateTime.now().difference(product.stockEmptyAt!).inDays} jour(s)',
-                            style: TextStyle(fontSize: 10, color: Colors.red.shade700, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ]
-                ],
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Text(
-                product.category ?? '-',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Text(
-                '${product.salePrice.toStringAsFixed(0)} GNF',
-                style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: product.stockQuantity > 0 ? Colors.green.shade50 : Colors.red.shade50,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${product.stockQuantity} Unité(s)',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: product.stockQuantity > 0 ? Colors.green.shade700 : Colors.red.shade700,
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: product.quantitySold > 0 ? Colors.blue.shade50 : Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${product.quantitySold} Unité(s)',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: product.quantitySold > 0 ? Colors.blue.shade700 : Colors.grey.shade700,
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
-                    tooltip: 'Modifier',
-                    onPressed: () => _showEditProductDialog(context, product),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                    tooltip: 'Supprimer',
-                    onPressed: () => _showDeleteProductDialog(context, product),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.print_outlined, color: Colors.grey.shade600, size: 20),
-                    tooltip: 'Imprimer étiquette',
-                    onPressed: () => _printProduct(product),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // _buildProductRow has been moved to _ProductRowItem class below.
 
-  void _showProductDetails(BuildContext context, ProductModel product) {
-    final double totalExpenses = product.stockQuantity * product.unitCostReal;
-    final double totalRevenue = product.stockQuantity * product.salePrice;
-    final double totalProfit = totalRevenue - totalExpenses;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: SizedBox(
-          width: MediaQuery.of(ctx).size.width > 550 ? 500 : MediaQuery.of(ctx).size.width * 0.95,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(colors: [AppColors.navyBlue, Color(0xFF1E293B)]),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.info_outline, color: AppColors.gold, size: 28),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Text('Détails: ${product.name}',
-                          style: GoogleFonts.outfit(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold)),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed: () => Navigator.of(ctx).pop(),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: AppColors.navyBlue,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.navyBlue.withValues(alpha: 0.2),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          )
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('Dépenses Totales', style: GoogleFonts.inter(fontWeight: FontWeight.w500, color: Colors.grey.shade300, fontSize: 13)),
-                              Text(
-                                '${totalExpenses.toStringAsFixed(0)} GNF',
-                                style: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 16, color: Colors.white),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('Revenu Total', style: GoogleFonts.inter(fontWeight: FontWeight.w500, color: Colors.grey.shade300, fontSize: 13)),
-                              Text(
-                                '${totalRevenue.toStringAsFixed(0)} GNF',
-                                style: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 16, color: Colors.white),
-                              ),
-                            ],
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            child: Divider(color: Colors.white24, height: 1),
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('Bénéfice Total', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14)),
-                              Text(
-                                '${totalProfit.toStringAsFixed(0)} GNF',
-                                style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 20, color: totalProfit >= 0 ? AppColors.gold : Colors.redAccent),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.of(ctx).pop();
-                          _printProductDetailsPdf(product, totalExpenses, totalRevenue, totalProfit);
-                        },
-                        icon: const Icon(Icons.picture_as_pdf, color: AppColors.navyBlue),
-                        label: const Text('Imprimer PDF (WhatsApp)', style: TextStyle(fontWeight: FontWeight.bold)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.gold,
-                          foregroundColor: AppColors.navyBlue,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  // _showProductDetails is now inline within _ProductRowItem.
 
   void _showAddProductDialog(BuildContext context) {
     showDialog(
@@ -878,8 +630,8 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
   final _salePriceCtrl = TextEditingController();
   final _qtyCtrl = TextEditingController();
   final _purchaseCostCtrl = TextEditingController(); // UNIT purchase price
-  final _supplierFeeCtrl = TextEditingController(); // Frais Fournisseur
-  final _transitFeeCtrl = TextEditingController(); // Frais Transitaire
+  final _transitaireFeeCtrl = TextEditingController(); // Frais de Transitaire
+  final _transportFeeCtrl = TextEditingController(); // Frais de Transport
   bool _isSaving = false;
   String? _error;
   List<dynamic> _purchases = [];
@@ -900,8 +652,8 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
     _qtyCtrl.addListener(() => setState(() {}));
     _purchaseCostCtrl.addListener(() => setState(() {}));
     _salePriceCtrl.addListener(() => setState(() {}));
-    _supplierFeeCtrl.addListener(() => setState(() {}));
-    _transitFeeCtrl.addListener(() => setState(() {}));
+    _transitaireFeeCtrl.addListener(() => setState(() {}));
+    _transportFeeCtrl.addListener(() => setState(() {}));
   }
 
   Future<void> _fetchPurchases() async {
@@ -911,7 +663,8 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
       if (res.statusCode == 200) {
         if (mounted) {
           setState(() {
-            _purchases = json.decode(res.body)['data'];
+            final data = json.decode(res.body)['data'] as List;
+            _purchases = data.where((p) => p['status'] == 'Reçu' && (p['selling_price'] == 0 || p['selling_price'] == null)).toList();
             _isLoadingPurchases = false;
           });
         }
@@ -927,8 +680,8 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
     _salePriceCtrl.dispose();
     _qtyCtrl.dispose();
     _purchaseCostCtrl.dispose();
-    _supplierFeeCtrl.dispose();
-    _transitFeeCtrl.dispose();
+    _transitaireFeeCtrl.dispose();
+    _transportFeeCtrl.dispose();
   }
 
   @override
@@ -944,9 +697,9 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
     try {
       final double? qty = double.tryParse(_qtyCtrl.text.trim());
       final double? unitPCost = double.tryParse(_purchaseCostCtrl.text.trim());
-      final double sFee = double.tryParse(_supplierFeeCtrl.text.trim()) ?? 0;
-      final double tFee = double.tryParse(_transitFeeCtrl.text.trim()) ?? 0;
-      final double totalTransportAndFees = sFee + tFee;
+      final double transitaireFee = double.tryParse(_transitaireFeeCtrl.text.trim()) ?? 0;
+      final double transportFee = double.tryParse(_transportFeeCtrl.text.trim()) ?? 0;
+      final double totalTransportAndFees = transitaireFee + transportFee;
 
       final double? totalPurchase = (qty != null && unitPCost != null) ? (qty * unitPCost) : null;
 
@@ -1063,7 +816,8 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
                             _nameCtrl.text = selected['product_name']?.toString() ?? '';
                             _qtyCtrl.text = selected['quantity_received']?.toString() ?? '';
                             _purchaseCostCtrl.text = selected['purchase_cost']?.toString() ?? '';
-                            _transitFeeCtrl.text = selected['transport_cost']?.toString() ?? '';
+                            _transitaireFeeCtrl.text = selected['transport_cost']?.toString() ?? '';
+                            _transportFeeCtrl.text = selected['reception_transport_cost']?.toString() ?? '';
                           }
                         });
                       },
@@ -1091,9 +845,9 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Expanded(child: _buildField('Frais Fournisseur (GNF)', 'ex: 500000', _supplierFeeCtrl, Icons.local_shipping_outlined, isNumber: true, isOptional: true)),
+                  Expanded(child: _buildField('Frais de Transitaire (GNF)', 'ex: 500000', _transitaireFeeCtrl, Icons.local_shipping_outlined, isNumber: true, isOptional: true)),
                   const SizedBox(width: 16),
-                  Expanded(child: _buildField('Frais de Transport (GNF)', 'ex: 1000000', _transitFeeCtrl, Icons.flight_land, isNumber: true, isOptional: true)),
+                  Expanded(child: _buildField('Frais de Transport (GNF)', 'ex: 1000000', _transportFeeCtrl, Icons.flight_land, isNumber: true, isOptional: true)),
                 ],
               ),
               const SizedBox(height: 24),
@@ -1104,11 +858,11 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
                   final double qty = double.tryParse(_qtyCtrl.text) ?? 0;
                   final double unitPurchase = double.tryParse(_purchaseCostCtrl.text) ?? 0;
                   final double unitSale = double.tryParse(_salePriceCtrl.text) ?? 0;
-                  final double supplierFee = double.tryParse(_supplierFeeCtrl.text) ?? 0;
-                  final double transitFee = double.tryParse(_transitFeeCtrl.text) ?? 0;
+                  final double transitaireFee = double.tryParse(_transitaireFeeCtrl.text) ?? 0;
+                  final double transportFee = double.tryParse(_transportFeeCtrl.text) ?? 0;
                   
                   final double totalPurchaseGoods = qty * unitPurchase;
-                  final double totalExpenses = totalPurchaseGoods + supplierFee + transitFee;
+                  final double totalExpenses = totalPurchaseGoods + transitaireFee + transportFee;
                   final double totalRevenue = qty * unitSale;
                   final double totalProfit = totalRevenue - totalExpenses;
 
@@ -1241,6 +995,277 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
             return null;
           },
         ),
+      ],
+    );
+  }
+}
+
+// --- Custom Row Widget ---
+class _ProductRowItem extends StatefulWidget {
+  final ProductModel product;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+  final VoidCallback onPrint;
+  final Function(ProductModel, double, double, double) onPrintPdf;
+
+  const _ProductRowItem({
+    required this.product,
+    required this.onEdit,
+    required this.onDelete,
+    required this.onPrint,
+    required this.onPrintPdf,
+  });
+
+  @override
+  State<_ProductRowItem> createState() => _ProductRowItemState();
+}
+
+class _ProductRowItemState extends State<_ProductRowItem> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final double totalExpenses = widget.product.stockQuantity * widget.product.unitCostReal;
+    final double totalRevenue = widget.product.stockQuantity * widget.product.salePrice;
+    final double totalProfit = totalRevenue - totalExpenses;
+
+    return Column(
+      children: [
+        InkWell(
+          onTap: () {
+            setState(() {
+              _isExpanded = !_isExpanded;
+            });
+          },
+          hoverColor: Colors.grey.shade50,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.product.name,
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                      ),
+                      if (widget.product.color != null && widget.product.color!.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'Couleur: ${widget.product.color}',
+                            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                          ),
+                        ),
+                      ],
+                      if (widget.product.stockQuantity <= 0 && widget.product.stockEmptyAt != null) ...[
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: Colors.red.shade200)
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.warning_amber_rounded, size: 12, color: Colors.red.shade700),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Rupture ! Archivage auto dans ${3 - DateTime.now().difference(widget.product.stockEmptyAt!).inDays} jour(s)',
+                                style: TextStyle(fontSize: 10, color: Colors.red.shade700, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ]
+                    ],
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    widget.product.category ?? '-',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    '${widget.product.salePrice.toStringAsFixed(0)} GNF',
+                    style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: widget.product.stockQuantity > 0 ? Colors.green.shade50 : Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${widget.product.stockQuantity} Unité(s)',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: widget.product.stockQuantity > 0 ? Colors.green.shade700 : Colors.red.shade700,
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: widget.product.quantitySold > 0 ? Colors.blue.shade50 : Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${widget.product.quantitySold} Unité(s)',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: widget.product.quantitySold > 0 ? Colors.blue.shade700 : Colors.grey.shade700,
+                      ),
+                    ),
+                  ),
+                ),
+                Icon(
+                  _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  color: Colors.grey.shade400,
+                ),
+                const SizedBox(width: 8),
+              ],
+            ),
+          ),
+        ),
+        if (_isExpanded)
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.navyBlue.withValues(alpha: 0.02),
+              border: Border(top: BorderSide(color: Colors.grey.shade100)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Détails Financiers', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.navyBlue)),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Dépenses Totales', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                            Text('${totalExpenses.toStringAsFixed(0)} GNF', style: const TextStyle(fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Revenu Total', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                            Text('${totalRevenue.toStringAsFixed(0)} GNF', style: const TextStyle(fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8),
+                          child: Divider(),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Bénéfice Total', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text('${totalProfit.toStringAsFixed(0)} GNF', 
+                              style: TextStyle(fontWeight: FontWeight.bold, color: totalProfit >= 0 ? Colors.green.shade700 : Colors.red.shade700)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () => widget.onPrintPdf(widget.product, totalExpenses, totalRevenue, totalProfit),
+                        icon: const Icon(Icons.picture_as_pdf, color: AppColors.navyBlue, size: 16),
+                        label: const Text('Rapport PDF', style: TextStyle(color: AppColors.navyBlue)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.gold,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: widget.onPrint,
+                        icon: const Icon(Icons.print_outlined, size: 16),
+                        label: const Text('Imprimer Étiquette'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  flex: 1,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: widget.onEdit,
+                        icon: const Icon(Icons.edit_outlined, color: Colors.white, size: 16),
+                        label: const Text('Modifier', style: TextStyle(color: Colors.white)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue.shade600,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ElevatedButton.icon(
+                        onPressed: widget.onDelete,
+                        icon: const Icon(Icons.delete_outline, color: Colors.white, size: 16),
+                        label: const Text('Supprimer', style: TextStyle(color: Colors.white)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade600,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }

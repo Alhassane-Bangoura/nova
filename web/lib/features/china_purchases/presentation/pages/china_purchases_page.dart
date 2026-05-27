@@ -74,17 +74,108 @@ class _ChinaPurchasesPageState extends State<ChinaPurchasesPage> {
   }
 
   Future<void> _markAsReceived(String id) async {
+    final transportCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: SizedBox(
+          width: 450,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(colors: [AppColors.navyBlue, Color(0xFF1E293B)]),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.local_shipping_outlined, color: AppColors.gold, size: 24),
+                    const SizedBox(width: 12),
+                    Expanded(child: Text('Confirmer la Réception', style: GoogleFonts.outfit(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold))),
+                    IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(ctx, false)),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Frais de Transport à la Réception', style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppColors.navyBlue)),
+                      const SizedBox(height: 4),
+                      Text('Montant payé au transporteur local lors de la livraison (optionnel)', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: transportCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Frais de Transport (GNF)',
+                          prefixIcon: Icon(Icons.local_shipping_outlined, color: AppColors.navyBlue.withValues(alpha: 0.5)),
+                          filled: true,
+                          fillColor: Colors.grey.shade50,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade200)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade200)),
+                          focusedBorder: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)), borderSide: BorderSide(color: AppColors.navyBlue, width: 1.5)),
+                          hintText: '0 si aucun frais',
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+                          const SizedBox(width: 12),
+                          ElevatedButton.icon(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            icon: const Icon(Icons.check, color: AppColors.navyBlue),
+                            label: const Text('Confirmer', style: TextStyle(color: AppColors.navyBlue, fontWeight: FontWeight.bold)),
+                            style: ElevatedButton.styleFrom(backgroundColor: AppColors.gold),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (confirmed != true) return;
+
     try {
-      await http.put(
+      final transportCost = double.tryParse(transportCtrl.text) ?? 0;
+      final response = await http.put(
         Uri.parse('http://localhost:3000/api/china-purchases/$id/receive'),
         headers: {'Content-Type': 'application/json'},
+        body: json.encode({'receptionTransportCost': transportCost}),
       );
-      _fetchData();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reçu avec succès !'), backgroundColor: Colors.green));
+      final resData = json.decode(response.body);
+      if (response.statusCode == 200 && resData['success'] == true) {
+        _fetchData();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Commande reçue avec succès !'), backgroundColor: Colors.green));
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(resData['message'] ?? 'Erreur'), backgroundColor: Colors.red));
+        }
       }
     } catch (e) {
-      // Error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
+      }
     }
   }
 
@@ -310,7 +401,7 @@ class _ChinaPurchasesPageState extends State<ChinaPurchasesPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Achats Chine', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.navyBlue)),
+              Text('Commandes', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.navyBlue)),
               ElevatedButton.icon(
                 onPressed: _showAddPurchaseDialog,
                 icon: const Icon(Icons.flight_takeoff, color: Colors.white),
