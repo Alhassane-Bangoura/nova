@@ -65,6 +65,11 @@ const findAll = async () => {
          FROM products p
          LEFT JOIN inventory_batches b ON p.id = b.product_id
          WHERE p.is_archived = 0
+           AND (
+               (SELECT COUNT(*) FROM inventory_batches WHERE product_id = p.id) = 0
+               OR
+               (SELECT COUNT(*) FROM inventory_batches WHERE product_id = p.id AND status != 'En attente') > 0
+           )
          GROUP BY p.id
          ORDER BY p.name ASC`
     );
@@ -102,7 +107,8 @@ const update = async (id, product) => {
 };
 
 const remove = async (id) => {
-    await runQuery(`DELETE FROM products WHERE id = ?`, [id]);
+    // Soft delete to avoid foreign key constraints (ex: linked to pending batches or past sales)
+    await runQuery(`UPDATE products SET is_archived = 1, stock_empty_at = CURRENT_TIMESTAMP WHERE id = ?`, [id]);
 };
 
 const syncStockStatus = async () => {

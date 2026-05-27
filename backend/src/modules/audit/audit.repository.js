@@ -46,11 +46,15 @@ class AuditRepository {
     /**
      * Récupère les stats pour le résumé en haut de page
      */
-    static async getStats({ startDate, endDate } = {}) {
+    static async getStats({ startDate, endDate, search } = {}) {
         const params = [];
         const conditions = [];
         if (startDate) { conditions.push(`date(created_at) >= date(?)`); params.push(startDate); }
         if (endDate)   { conditions.push(`date(created_at) <= date(?)`); params.push(endDate); }
+        if (search) {
+            conditions.push(`(description LIKE ? OR employee_name LIKE ? OR entity_name LIKE ?)`);
+            params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+        }
         const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
         const rows = await allQuery(`

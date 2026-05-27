@@ -3,7 +3,7 @@ const db = require('../../config/database');
 
 class ExpensesService {
     static async createExpense(data) {
-        const { category, amount, description } = data;
+        const { category, amount, description, productId } = data;
         if (!category || !amount || amount <= 0) {
             throw new Error('Catégorie et montant valide requis.');
         }
@@ -22,7 +22,7 @@ class ExpensesService {
                 throw err;
             }
 
-            const expenseId = await ExpensesRepository.insertExpense(category, amount, description);
+            const expenseId = await ExpensesRepository.insertExpense(category, amount, description, productId);
             const newBalance = currentCash - amount;
             await ExpensesRepository.insertCashTransaction('OUT', amount, 'EXPENSE', expenseId, newBalance);
 

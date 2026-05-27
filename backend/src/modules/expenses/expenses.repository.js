@@ -5,10 +5,10 @@ class ExpensesRepository {
     static async commitTransaction() { await runQuery('COMMIT'); }
     static async rollbackTransaction() { await runQuery('ROLLBACK'); }
 
-    static async insertExpense(category, amount, description) {
+    static async insertExpense(category, amount, description, productId) {
         const result = await runQuery(
-            `INSERT INTO expenses (category, amount, description) VALUES (?, ?, ?)`,
-            [category, amount, description]
+            `INSERT INTO expenses (category, amount, description, product_id) VALUES (?, ?, ?, ?)`,
+            [category, amount, description, productId || null]
         );
         return result.lastID;
     }
@@ -27,7 +27,12 @@ class ExpensesRepository {
     }
     
     static async getAllExpenses() {
-        return await allQuery(`SELECT * FROM expenses ORDER BY expense_date DESC`);
+        return await allQuery(`
+            SELECT e.*, p.name as product_name
+            FROM expenses e
+            LEFT JOIN products p ON e.product_id = p.id
+            ORDER BY e.expense_date DESC
+        `);
     }
 }
 module.exports = ExpensesRepository;

@@ -5,7 +5,7 @@ const getAuditLogs = async (req, res, next) => {
         const { startDate, endDate, actionType, search } = req.query;
         const [logs, stats] = await Promise.all([
             AuditRepository.getLogs({ startDate, endDate, actionType, search }),
-            AuditRepository.getStats({ startDate, endDate }),
+            AuditRepository.getStats({ startDate, endDate, search }),
         ]);
         res.json({ status: 'success', data: { logs, stats } });
     } catch (err) {

@@ -5,7 +5,7 @@ const AppError = require('../../errors/AppError');
 class ChinaPurchasesRepository {
     static async getAll() {
         return await allQuery(`
-            SELECT b.*, p.name as product_name
+            SELECT b.*, p.name as product_name, p.selling_price
             FROM inventory_batches b
             JOIN products p ON b.product_id = p.id
             ORDER BY b.order_date DESC, b.batch_date DESC
@@ -72,20 +72,42 @@ class ChinaPurchasesRepository {
         }
     }
 
-    static async markAsReceived(batchId) {
-        const batch = await getQuery('SELECT purchase_cost, quantity_received FROM inventory_batches WHERE id = ?', [batchId]);
+    static async markAsReceived(batchId, receptionTransportCost = 0) {
+        const batch = await getQuery('SELECT purchase_cost, quantity_received, transport_cost FROM inventory_batches WHERE id = ?', [batchId]);
         if (!batch) return;
 
         const receptionDate = new Date().toISOString();
+        const recTransport = parseFloat(receptionTransportCost) || 0;
+
+        // Recompute unit_cost_real: (unit_cost * qty + transit_cost + reception_transport) / qty
+        const newUnitCostReal = batch.quantity_received > 0
+            ? batch.purchase_cost + ((batch.transport_cost + recTransport) / batch.quantity_received)
+            : batch.purchase_cost;
+
+        // Deduct reception transport from cash if any
+        if (recTransport > 0) {
+            const row = await getQuery(`SELECT balance_after FROM cash_transactions ORDER BY id DESC LIMIT 1`);
+            const currentBalance = row ? row.balance_after : 0;
+            if (currentBalance < recTransport) {
+                throw new AppError(`Fonds insuffisants pour les frais de transport. Solde: ${currentBalance} GNF, Frais: ${recTransport} GNF.`, 400);
+            }
+            const newBalance = currentBalance - recTransport;
+            await runQuery(
+                `INSERT INTO cash_transactions (type, amount, reference_type, reference_id, balance_after) VALUES (?, ?, ?, ?, ?)`,
+                ['OUT', recTransport, 'TRANSPORT_RECEPTION', batchId, newBalance]
+            );
+        }
 
         // When received, the remaining quantity becomes the received quantity
         return await runQuery(`
             UPDATE inventory_batches
             SET status = 'Reçu',
                 reception_date = ?,
-                quantity_remaining = quantity_received
+                quantity_remaining = quantity_received,
+                reception_transport_cost = ?,
+                unit_cost_real = ?
             WHERE id = ?
-        `, [receptionDate, batchId]);
+        `, [receptionDate, recTransport, newUnitCostReal, batchId]);
     }
     static async getReport(batchId) {
         const batch = await getQuery(`

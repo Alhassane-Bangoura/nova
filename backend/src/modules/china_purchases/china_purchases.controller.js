@@ -28,11 +28,12 @@ const create = async (req, res, next) => {
 const receive = async (req, res, next) => {
     try {
         const batchId = req.params.id;
-        await ChinaPurchasesRepository.markAsReceived(batchId);
+        const { receptionTransportCost } = req.body || {};
+        await ChinaPurchasesRepository.markAsReceived(batchId, receptionTransportCost);
         const batch = await getQuery('SELECT product_id, quantity_received FROM inventory_batches WHERE id = ?', [batchId]);
         // -- Audit log --
         db.run(`INSERT INTO audit_logs (action_type, entity_name, entity_id, description, employee_name) VALUES (?, ?, ?, ?, ?)`,
-            ['STOCK', 'china_purchases', batchId, `Réception commande Chine ID ${batchId}: ${batch ? batch.quantity_received : '?'} unités ajoutées au stock`, 'Système']);
+            ['STOCK', 'china_purchases', batchId, `Réception commande Chine ID ${batchId}: ${batch ? batch.quantity_received : '?'} unités ajoutées au stock. Frais transport réception: ${receptionTransportCost || 0} GNF`, 'Système']);
         res.status(200).json({ success: true, message: 'Commande marquée comme reçue' });
     } catch (error) {
         next(error);

@@ -1,16 +1,16 @@
 const AccountingRepository = require('./accounting.repository');
 
 class AccountingService {
-    static async getFinancialControlCenterData() {
+    static async getFinancialControlCenterData(productId = null) {
         const [
             cashHistory,
             profitSummary,
             expensesByCategory,
             netProfitEvolution
         ] = await Promise.all([
-            AccountingRepository.getCashHistory(),
-            AccountingRepository.getProfitabilitySummary(),
-            AccountingRepository.getExpensesByCategory(),
+            AccountingRepository.getCashHistory(productId),
+            AccountingRepository.getProfitabilitySummary(productId),
+            AccountingRepository.getExpensesByCategory(productId),
             AccountingRepository.getNetProfitEvolution()
         ]);
 
@@ -32,8 +32,8 @@ class AccountingService {
             const currentBalance = row ? row.balance_after : 0;
             const newBalance = currentBalance + amount;
             await runQuery(
-                `INSERT INTO cash_transactions (type, amount, reference_type, reference_id, balance_after) VALUES (?, ?, ?, ?, ?)`,
-                ['IN', amount, 'FUND', null, newBalance]
+                `INSERT INTO cash_transactions (type, amount, reference_type, reference_id, description, balance_after) VALUES (?, ?, ?, ?, ?, ?)`,
+                ['IN', amount, 'FUND', null, note, newBalance]
             );
             await runQuery('COMMIT');
             return { new_balance: newBalance, amount_added: amount, note };

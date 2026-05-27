@@ -2,7 +2,8 @@ const AccountingService = require('./accounting.service');
 
 exports.getFinancialDashboard = async (req, res, next) => {
     try {
-        const result = await AccountingService.getFinancialControlCenterData();
+        const { productId } = req.query;
+        const result = await AccountingService.getFinancialControlCenterData(productId);
         res.status(200).json(result);
     } catch (error) {
         next(error);

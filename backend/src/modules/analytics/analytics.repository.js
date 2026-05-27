@@ -1,14 +1,26 @@
 const { allQuery, getQuery } = require('../../utils/databaseHelper');
 
-const getDashboardData = async (startDate, endDate) => {
+const getDashboardData = async (startDate, endDate, productId = null) => {
+    let productFilter = '';
+    let paramsWithProduct = [startDate, endDate];
+    if (productId && productId !== 'all') {
+        productFilter = ' AND product_id = ?';
+        paramsWithProduct.push(productId);
+    }
+    
+    let productFilterS = '';
+    if (productId && productId !== 'all') {
+        productFilterS = ' AND s.product_id = ?';
+    }
+
     // 1. KPIs
     const salesData = await getQuery(`
         SELECT 
             COALESCE(SUM(total_revenue), 0) as total_revenue,
             COALESCE(SUM(total_profit), 0) as total_profit
         FROM stock_outputs
-        WHERE date(output_date) BETWEEN ? AND ?
-    `, [startDate, endDate]);
+        WHERE date(output_date) BETWEEN ? AND ? ${productFilter}
+    `, paramsWithProduct);
 
     const expensesData = await getQuery(`
         SELECT COALESCE(SUM(amount), 0) as total_expenses
@@ -21,11 +33,11 @@ const getDashboardData = async (startDate, endDate) => {
         SELECT p.name, SUM(s.quantity) as total_quantity, SUM(s.total_revenue) as revenue
         FROM stock_outputs s
         JOIN products p ON s.product_id = p.id
-        WHERE date(s.output_date) BETWEEN ? AND ?
+        WHERE date(s.output_date) BETWEEN ? AND ? ${productFilterS}
         GROUP BY s.product_id
         ORDER BY total_quantity DESC
         LIMIT 5
-    `, [startDate, endDate]);
+    `, paramsWithProduct);
 
     // 3. Expense Distribution (Pie Chart)
     const expenseDistribution = await allQuery(`
@@ -42,10 +54,10 @@ const getDashboardData = async (startDate, endDate) => {
                SUM(total_revenue) as revenue, 
                SUM(total_profit) as profit
         FROM stock_outputs
-        WHERE date(output_date) BETWEEN ? AND ?
+        WHERE date(output_date) BETWEEN ? AND ? ${productFilter}
         GROUP BY date(output_date)
         ORDER BY date ASC
-    `, [startDate, endDate]);
+    `, paramsWithProduct);
 
     // 5. Product Comparison (Genouillères vs Casques)
     const productComparison = await allQuery(`
@@ -58,9 +70,9 @@ const getDashboardData = async (startDate, endDate) => {
             SUM(s.total_profit) as profit
         FROM stock_outputs s
         JOIN products p ON s.product_id = p.id
-        WHERE date(s.output_date) BETWEEN ? AND ?
+        WHERE date(s.output_date) BETWEEN ? AND ? ${productFilterS}
         GROUP BY product_group
-    `, [startDate, endDate]);
+    `, paramsWithProduct);
 
     // 6. Sanctions count
     const sanctionsData = await getQuery(`

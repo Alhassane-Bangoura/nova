@@ -80,6 +80,7 @@ const runMigration = () => {
                 amount REAL NOT NULL,
                 reference_type TEXT NOT NULL, -- ex: 'OUTPUT', 'EXPENSE', 'PURCHASE', 'MANUAL'
                 reference_id INTEGER,
+                description TEXT,
                 balance_after REAL NOT NULL,
                 transaction_date DATETIME DEFAULT CURRENT_TIMESTAMP
             );
