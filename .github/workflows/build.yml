@@ -8,6 +8,9 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: web
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -44,5 +47,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: NovaGenix-Windows-Installer
-          path: Output/*.exe
-          retention-days: 30
+          path: web/Output/*.exe
