@@ -8,7 +8,6 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,7 +18,7 @@ jobs:
           channel: stable
 
       - name: Clean build
-      - run: flutter clean
+        run: flutter clean
 
       - name: Install dependencies
         run: flutter pub get
