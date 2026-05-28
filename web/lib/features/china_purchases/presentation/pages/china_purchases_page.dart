@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../../../../../core/database/database_helper.dart';
 import '../../../../../core/theme/app_colors.dart';
 
 class ChinaPurchasesPage extends StatefulWidget {
@@ -26,47 +25,63 @@ class _ChinaPurchasesPageState extends State<ChinaPurchasesPage> {
   Future<void> _fetchData() async {
     setState(() => _isLoading = true);
     try {
-      final resPurchases = await http.get(Uri.parse('http://localhost:3000/api/china-purchases'));
-      final resProducts = await http.get(Uri.parse('http://localhost:3000/api/products'));
-      if (resPurchases.statusCode == 200 && resProducts.statusCode == 200) {
+      final db = await DatabaseHelper.instance.database;
+      final purchases = await db.rawQuery('''
+        SELECT b.*, p.name as product_name
+        FROM inventory_batches b
+        JOIN products p ON b.product_id = p.id
+        ORDER BY b.id DESC
+      ''');
+      final products = await db.query('products');
+      if (mounted) {
         setState(() {
-          _purchases = json.decode(resPurchases.body)['data'];
-          _products = json.decode(resProducts.body)['data'];
+          _purchases = purchases;
+          _products = products;
           _isLoading = false;
         });
       }
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _createPurchase(Map<String, dynamic> data) async {
     try {
-      final response = await http.post(
-        Uri.parse('http://localhost:3000/api/china-purchases'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(data),
-      );
+      final db = await DatabaseHelper.instance.database;
+      int productId;
       
-      final resData = json.decode(response.body);
-      
-      if (response.statusCode >= 200 && response.statusCode < 300 && resData['success'] == true) {
-        _fetchData();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Commande créée avec succès !'), backgroundColor: Colors.green));
-        }
+      // Check if product exists
+      final pList = await db.query('products', where: 'name = ?', whereArgs: [data['productName']]);
+      if (pList.isNotEmpty) {
+        productId = pList.first['id'] as int;
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(resData['message'] ?? 'Erreur lors de la création de la commande.'),
-            backgroundColor: Colors.red,
-          ));
-        }
+        productId = await db.insert('products', {
+          'name': data['productName'],
+          'category': 'Non classé',
+          'selling_price': 0,
+        });
+      }
+
+      await db.insert('inventory_batches', {
+        'product_id': productId,
+        'supplier_name': data['supplier'],
+        'quantity_received': data['quantity'],
+        'quantity_remaining': data['quantity'],
+        'purchase_cost': data['unitCost'] * data['quantity'],
+        'transport_cost': data['transportCost'],
+        'unit_cost_real': (data['unitCost'] * data['quantity'] + data['transportCost']) / data['quantity'],
+        'order_date': data['orderDate'],
+        'status': 'En Transit',
+      });
+      
+      _fetchData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Commande créée avec succès !'), backgroundColor: Colors.green));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Erreur de connexion: $e'),
+          content: Text('Erreur: $e'),
           backgroundColor: Colors.red,
         ));
       }
@@ -156,21 +171,30 @@ class _ChinaPurchasesPageState extends State<ChinaPurchasesPage> {
 
     try {
       final transportCost = double.tryParse(transportCtrl.text) ?? 0;
-      final response = await http.put(
-        Uri.parse('http://localhost:3000/api/china-purchases/$id/receive'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'receptionTransportCost': transportCost}),
-      );
-      final resData = json.decode(response.body);
-      if (response.statusCode == 200 && resData['success'] == true) {
-        _fetchData();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Commande reçue avec succès !'), backgroundColor: Colors.green));
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(resData['message'] ?? 'Erreur'), backgroundColor: Colors.red));
-        }
+      final db = await DatabaseHelper.instance.database;
+      
+      // Recalculer le cout de revient
+      final bList = await db.query('inventory_batches', where: 'id = ?', whereArgs: [int.parse(id)]);
+      if (bList.isEmpty) return;
+      
+      final batch = bList.first;
+      final qte = batch['quantity_received'] as int;
+      final oldTransport = (batch['transport_cost'] as num).toDouble();
+      final pCost = (batch['purchase_cost'] as num).toDouble();
+      final newTransport = oldTransport + transportCost;
+      final newUnitCost = qte > 0 ? (pCost + newTransport) / qte : 0.0;
+      
+      await db.update('inventory_batches', {
+        'status': 'Reçu',
+        'reception_date': DateTime.now().toIso8601String(),
+        'reception_transport_cost': transportCost,
+        'transport_cost': newTransport,
+        'unit_cost_real': newUnitCost,
+      }, where: 'id = ?', whereArgs: [int.parse(id)]);
+      
+      _fetchData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Commande reçue avec succès !'), backgroundColor: Colors.green));
       }
     } catch (e) {
       if (mounted) {
@@ -181,53 +205,66 @@ class _ChinaPurchasesPageState extends State<ChinaPurchasesPage> {
 
   Future<void> _showReportDialog(String id) async {
     try {
-      final response = await http.get(Uri.parse('http://localhost:3000/api/china-purchases/$id/report'));
-      final data = json.decode(response.body);
-      if (response.statusCode == 200 && data['success']) {
-        final report = data['data']['report'];
-        final batch = data['data']['batch'];
-        
-        final formatCurrency = NumberFormat.currency(locale: 'fr_FR', symbol: 'GNF', decimalDigits: 0);
-        
-        if (mounted) {
-          showDialog(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: Text('Bilan du Lot #${batch['id']} - ${batch['product_name']}', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppColors.navyBlue)),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('État: ${report['isDepleted'] ? 'Écoulé 🔴' : 'En cours 🟢'}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(height: 16),
-                  Text('Quantité Commandée: ${batch['quantity_received']}'),
-                  Text('Quantité Vendue: ${report['quantitySold']}'),
-                  Text('Quantité Restante: ${batch['quantity_remaining']}'),
-                  const Divider(height: 32),
-                  Text('Total Dépensé (Achat + Transport): ${formatCurrency.format(report['totalSpent'])}', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                  Text('Total Gagné (Ventes): ${formatCurrency.format(report['totalEarned'])}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
-                  Text(
-                    '${report['profitOrLoss'] >= 0 ? 'Bénéfice' : 'Perte'}: ${formatCurrency.format(report['profitOrLoss'])}',
-                    style: TextStyle(
-                      color: report['profitOrLoss'] >= 0 ? Colors.green : Colors.red,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
+      final db = await DatabaseHelper.instance.database;
+      final batchList = await db.rawQuery('SELECT b.*, p.name as product_name FROM inventory_batches b JOIN products p ON b.product_id = p.id WHERE b.id = ?', [int.parse(id)]);
+      if (batchList.isEmpty) return;
+      
+      final batch = batchList.first;
+      final outputs = await db.rawQuery('SELECT SUM(quantity) as qty, SUM(total_revenue) as rev, SUM(total_profit) as prof FROM stock_outputs WHERE batch_id = ?', [int.parse(id)]);
+      
+      final qtySold = outputs.isNotEmpty ? outputs.first['qty'] ?? 0 : 0;
+      final totalEarned = outputs.isNotEmpty ? outputs.first['rev'] ?? 0.0 : 0.0;
+      
+      final totalSpent = (batch['purchase_cost'] as num) + (batch['transport_cost'] as num);
+      final profitOrLoss = (totalEarned as num) - totalSpent;
+      final isDepleted = (batch['quantity_remaining'] as num) == 0;
+      
+      final report = {
+        'isDepleted': isDepleted,
+        'quantitySold': qtySold,
+        'totalSpent': totalSpent,
+        'totalEarned': totalEarned,
+        'profitOrLoss': profitOrLoss,
+      };
+
+      final formatCurrency = NumberFormat.currency(locale: 'fr_FR', symbol: 'GNF', decimalDigits: 0);
+      
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text('Bilan du Lot #${batch['id']} - ${batch['product_name']}', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppColors.navyBlue)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('État: ${(report['isDepleted'] as bool) ? 'Écoulé 🔴' : 'En cours 🟢'}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 16),
+                Text('Quantité Commandée: ${batch['quantity_received']}'),
+                Text('Quantité Vendue: ${report['quantitySold']}'),
+                Text('Quantité Restante: ${batch['quantity_remaining']}'),
+                const Divider(height: 32),
+                Text('Total Dépensé (Achat + Transport): ${formatCurrency.format(report['totalSpent'])}', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                Text('Total Gagné (Ventes): ${formatCurrency.format(report['totalEarned'])}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                Text(
+                  '${(report['profitOrLoss'] as num) >= 0 ? 'Bénéfice' : 'Perte'}: ${formatCurrency.format(report['profitOrLoss'])}',
+                  style: TextStyle(
+                    color: (report['profitOrLoss'] as num) >= 0 ? Colors.green : Colors.red,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
                   ),
-                ],
-              ),
-              actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Fermer'))
+                ),
               ],
             ),
-          );
-        }
-      } else {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Erreur lors du chargement du bilan'), backgroundColor: Colors.red));
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Fermer'))
+            ],
+          ),
+        );
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur de connexion: $e'), backgroundColor: Colors.red));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
     }
   }
 

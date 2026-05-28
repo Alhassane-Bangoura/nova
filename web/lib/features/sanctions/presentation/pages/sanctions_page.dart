@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../../../../core/database/database_helper.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 
-const String _baseUrl = 'http://localhost:3000/api';
 const double _sanctionAmount = 5000;
 
 final _motifs = [
@@ -50,30 +48,40 @@ class _SanctionsPageState extends State<SanctionsPage> with SingleTickerProvider
 
   Future<void> _loadSanctions() async {
     try {
-      final r = await http.get(Uri.parse('$_baseUrl/sanctions'));
-      if (r.statusCode == 200) {
-        final d = json.decode(r.body);
-        if (mounted) setState(() => _sanctions = d['data'] ?? []);
-      }
+      final db = await DatabaseHelper.instance.database;
+      final results = await db.rawQuery('''
+        SELECT s.*, e.name as employee_name 
+        FROM sanctions s 
+        JOIN employees e ON s.employee_id = e.id 
+        ORDER BY s.sanction_date DESC
+      ''');
+      if (mounted) setState(() => _sanctions = results);
     } catch (_) {}
   }
 
   Future<void> _loadEmployees() async {
     try {
-      final r = await http.get(Uri.parse('$_baseUrl/team'));
-      if (r.statusCode == 200) {
-        final d = json.decode(r.body);
-        if (mounted) setState(() => _employees = d['data'] ?? []);
-      }
+      final db = await DatabaseHelper.instance.database;
+      final results = await db.query('employees', orderBy: 'name ASC');
+      if (mounted) setState(() => _employees = results);
     } catch (_) {}
   }
 
   Future<void> _loadStats() async {
     try {
-      final r = await http.get(Uri.parse('$_baseUrl/sanctions/stats'));
-      if (r.statusCode == 200) {
-        final d = json.decode(r.body);
-        if (mounted) setState(() => _stats = d['data'] ?? {});
+      final db = await DatabaseHelper.instance.database;
+      final totalRow = await db.rawQuery('SELECT COUNT(*) as total FROM sanctions');
+      final collectedRow = await db.rawQuery("SELECT SUM(amount) as collected FROM sanctions WHERE status = 'Payée'");
+      final pendingRow = await db.rawQuery("SELECT SUM(amount) as pending FROM sanctions WHERE status = 'En attente'");
+      
+      if (mounted) {
+        setState(() {
+          _stats = {
+            'total_sanctions': totalRow.first['total'] ?? 0,
+            'total_collected': collectedRow.first['collected'] ?? 0,
+            'total_pending': pendingRow.first['pending'] ?? 0,
+          };
+        });
       }
     } catch (_) {}
   }
@@ -85,12 +93,9 @@ class _SanctionsPageState extends State<SanctionsPage> with SingleTickerProvider
 
   Future<void> _updateStatus(String id, String status) async {
     try {
-      final r = await http.put(
-        Uri.parse('$_baseUrl/sanctions/$id/status'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'status': status}),
-      );
-      if (r.statusCode == 200) _loadAll();
+      final db = await DatabaseHelper.instance.database;
+      await db.update('sanctions', {'status': status}, where: 'id = ?', whereArgs: [int.parse(id)]);
+      _loadAll();
     } catch (_) {}
   }
 
@@ -171,21 +176,20 @@ class _SanctionsPageState extends State<SanctionsPage> with SingleTickerProvider
                   setS(() => submitting = true);
                   try {
                     final finalReason = selectedMotif == 'Autre (préciser)' ? customMotifCtrl.text.trim() : selectedMotif;
-                    final r = await http.post(
-                      Uri.parse('$_baseUrl/sanctions'),
-                      headers: {'Content-Type': 'application/json'},
-                      body: json.encode({'employee_id': selectedEmployee['id'], 'reason': finalReason}),
-                    );
-                    if (r.statusCode == 201) {
-                      if (ctx.mounted) {
-                        Navigator.pop(ctx);
-                      }
-                      _loadAll();
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Sanction enregistrée'), backgroundColor: Colors.green),
-                        );
-                      }
+                    final db = await DatabaseHelper.instance.database;
+                    await db.insert('sanctions', {
+                      'employee_id': selectedEmployee['id'],
+                      'reason': finalReason,
+                      'amount': _sanctionAmount,
+                    });
+                    if (ctx.mounted) {
+                      Navigator.pop(ctx);
+                    }
+                    _loadAll();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Sanction enregistrée'), backgroundColor: Colors.green),
+                      );
                     }
                   } catch (_) {}
                   if (ctx.mounted) setS(() => submitting = false);
@@ -241,14 +245,20 @@ class _SanctionsPageState extends State<SanctionsPage> with SingleTickerProvider
                   if (nameCtrl.text.trim().isEmpty) return;
                   setS(() => submitting = true);
                   try {
-                    final body = json.encode({'name': nameCtrl.text.trim(), 'role': roleCtrl.text.trim()});
-                    final r = isEdit
-                      ? await http.put(Uri.parse('$_baseUrl/team/${emp['id']}'), headers: {'Content-Type': 'application/json'}, body: body)
-                      : await http.post(Uri.parse('$_baseUrl/team'), headers: {'Content-Type': 'application/json'}, body: body);
-                    if ((r.statusCode == 200 || r.statusCode == 201)) {
-                      if (ctx.mounted) Navigator.pop(ctx);
-                      _loadEmployees();
+                    final db = await DatabaseHelper.instance.database;
+                    if (isEdit) {
+                      await db.update('employees', {
+                        'name': nameCtrl.text.trim(),
+                        'role': roleCtrl.text.trim(),
+                      }, where: 'id = ?', whereArgs: [emp['id']]);
+                    } else {
+                      await db.insert('employees', {
+                        'name': nameCtrl.text.trim(),
+                        'role': roleCtrl.text.trim(),
+                      });
                     }
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    _loadEmployees();
                   } catch (_) {}
                   if (ctx.mounted) setS(() => submitting = false);
                 },

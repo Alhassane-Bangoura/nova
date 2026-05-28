@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../../../../core/database/database_helper.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -33,17 +32,18 @@ class _StockOutputsPageState extends State<StockOutputsPage> {
   Future<void> _fetchOutputs() async {
     setState(() { _isLoading = true; _errorMessage = ''; });
     try {
-      final response = await http.get(Uri.parse('http://localhost:3000/api/stock_outputs'));
-      if (response.statusCode == 200) {
-        final decoded = json.decode(response.body);
-        if (decoded['success'] == true) {
-          setState(() { _outputs = decoded['data']; _isLoading = false; });
-        }
-      } else {
-        setState(() { _errorMessage = 'Erreur serveur: ${response.statusCode}'; _isLoading = false; });
+      final db = await DatabaseHelper.instance.database;
+      final results = await db.rawQuery('''
+        SELECT s.*, p.name as product_name 
+        FROM stock_outputs s 
+        JOIN products p ON s.product_id = p.id 
+        ORDER BY s.output_date DESC
+      ''');
+      if (mounted) {
+        setState(() { _outputs = results; _isLoading = false; });
       }
     } catch (e) {
-      setState(() { _errorMessage = 'Impossible de se connecter au serveur local.'; _isLoading = false; });
+      if (mounted) setState(() { _errorMessage = 'Erreur lors du chargement: $e'; _isLoading = false; });
     }
   }
 
@@ -441,18 +441,17 @@ class _NewOutputDialogState extends State<NewOutputDialog> {
 
   Future<void> _loadProducts() async {
     try {
-      final response = await http.get(Uri.parse('http://localhost:3000/api/products'));
-      if (response.statusCode == 200) {
-        final decoded = json.decode(response.body);
-        // Gère les deux formats possibles
-        final List<dynamic> list = decoded is List ? decoded : (decoded['data'] ?? []);
-        final stockedProducts = list.where((p) => (p['stock_quantity'] ?? 0) > 0).toList();
-        setState(() { _products = stockedProducts; _isLoadingProducts = false; });
-      } else {
-        setState(() { _isLoadingProducts = false; });
-      }
+      final db = await DatabaseHelper.instance.database;
+      final results = await db.rawQuery('''
+        SELECT p.*, COALESCE(SUM(b.quantity_remaining), 0) as stock_quantity 
+        FROM products p 
+        LEFT JOIN inventory_batches b ON p.id = b.product_id AND b.status = 'Reçu' 
+        GROUP BY p.id 
+        HAVING stock_quantity > 0
+      ''');
+      if (mounted) setState(() { _products = results; _isLoadingProducts = false; });
     } catch (e) {
-      setState(() { _isLoadingProducts = false; });
+      if (mounted) setState(() { _isLoadingProducts = false; });
     }
   }
 
@@ -466,35 +465,22 @@ class _NewOutputDialogState extends State<NewOutputDialog> {
     setState(() { _isSubmitting = true; _submitError = ''; });
 
     try {
-      final body = json.encode({
-        'clientName': _customerCtrl.text.trim(),
-        'productId': _selectedProduct['id'],
-        'quantity': int.parse(_quantityCtrl.text.trim()),
-        'sellingPrice': double.parse(_priceCtrl.text.trim()),
-        'location': _locationCtrl.text.trim(),
-      });
-
-      final response = await http.post(
-        Uri.parse('http://localhost:3000/api/stock_outputs'),
-        headers: {'Content-Type': 'application/json'},
-        body: body,
+      await DatabaseHelper.instance.recordStockOutput(
+        productId: _selectedProduct['id'],
+        quantityToDeduct: int.parse(_quantityCtrl.text.trim()),
+        sellingPrice: double.parse(_priceCtrl.text.trim()),
+        location: _locationCtrl.text.trim(),
+        clientName: _customerCtrl.text.trim(),
       );
 
-      final decoded = json.decode(response.body);
-
-      if (response.statusCode == 201 && decoded['success'] == true) {
-        if (mounted) Navigator.of(context).pop(true); // Retour avec succès
-      } else {
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (e) {
+      if (mounted) {
         setState(() {
-          _submitError = decoded['message'] ?? 'Erreur lors de l\'enregistrement.';
+          _submitError = 'Erreur: $e';
           _isSubmitting = false;
         });
       }
-    } catch (e) {
-      setState(() {
-        _submitError = 'Impossible de joindre le serveur local.';
-        _isSubmitting = false;
-      });
     }
   }
 

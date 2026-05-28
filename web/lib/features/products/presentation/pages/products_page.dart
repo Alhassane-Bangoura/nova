@@ -7,8 +7,7 @@ import '../../data/models/product_model.dart';
 import '../../data/repositories/product_repository.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/erp_stat_card.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../../../../core/database/database_helper.dart';
 
 class ProductsPage extends StatefulWidget {
   const ProductsPage({super.key});
@@ -659,15 +658,13 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
   Future<void> _fetchPurchases() async {
     setState(() => _isLoadingPurchases = true);
     try {
-      final res = await http.get(Uri.parse('http://localhost:3000/api/china-purchases'));
-      if (res.statusCode == 200) {
-        if (mounted) {
-          setState(() {
-            final data = json.decode(res.body)['data'] as List;
-            _purchases = data.where((p) => p['status'] == 'Reçu' && (p['selling_price'] == 0 || p['selling_price'] == null)).toList();
-            _isLoadingPurchases = false;
-          });
-        }
+      final db = await DatabaseHelper.instance.database;
+      final results = await db.rawQuery("SELECT * FROM inventory_batches WHERE status = 'Reçu' AND (selling_price = 0 OR selling_price IS NULL)");
+      if (mounted) {
+        setState(() {
+          _purchases = results;
+          _isLoadingPurchases = false;
+        });
       }
     } catch (e) {
       if (mounted) setState(() => _isLoadingPurchases = false);

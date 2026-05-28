@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../../../../core/database/database_helper.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
-
-const String _auditBaseUrl = 'http://localhost:3000/api';
 
 class AuditPage extends StatefulWidget {
   const AuditPage({super.key});
@@ -51,10 +48,9 @@ class _AuditPageState extends State<AuditPage> {
 
   Future<void> _fetchProducts() async {
     try {
-      final r = await http.get(Uri.parse('http://localhost:3000/api/products'));
-      if (r.statusCode == 200) {
-        if (mounted) setState(() { _products = json.decode(r.body)['data'] ?? []; });
-      }
+      final db = await DatabaseHelper.instance.database;
+      final results = await db.query('products');
+      if (mounted) setState(() { _products = results; });
     } catch (_) {}
   }
 
@@ -77,24 +73,45 @@ class _AuditPageState extends State<AuditPage> {
     setState(() { _isLoading = true; _errorMessage = null; });
     try {
       final s = DateFormat('yyyy-MM-dd').format(_startDate);
-      final e = DateFormat('yyyy-MM-dd').format(_endDate);
+      final e = DateFormat('yyyy-MM-dd 23:59:59').format(_endDate);
       final type = _selectedType == 'ALL' ? '' : _selectedType;
       final search = _selectedProductName ?? _searchController.text.trim();
 
-      final uri = Uri.parse('$_auditBaseUrl/audit?startDate=$s&endDate=$e&actionType=$type&search=$search');
-      final r = await http.get(uri).timeout(const Duration(seconds: 5));
-      if (r.statusCode == 200) {
-        final d = json.decode(r.body);
-        if (mounted) {
-          setState(() {
-            _logs = d['data']['logs'] ?? [];
-            _stats = Map<String, dynamic>.from(d['data']['stats'] ?? {});
-            _isLoading = false;
-            _lastQueryKey = key;
-          });
+      final db = await DatabaseHelper.instance.database;
+      
+      String whereClause = "created_at >= ? AND created_at <= ?";
+      List<dynamic> whereArgs = [s, e];
+      
+      if (type.isNotEmpty) {
+        whereClause += " AND action_type = ?";
+        whereArgs.add(type);
+      }
+      
+      if (search.isNotEmpty) {
+        whereClause += " AND (description LIKE ? OR entity_name LIKE ? OR employee_name LIKE ?)";
+        whereArgs.addAll(['%\$search%', '%\$search%', '%\$search%']);
+      }
+      
+      final logs = await db.query('audit_logs', where: whereClause, whereArgs: whereArgs, orderBy: 'created_at DESC');
+      
+      // Calculate Stats
+      final allLogs = await db.query('audit_logs', where: "created_at >= ? AND created_at <= ?", whereArgs: [s, e]);
+      Map<String, dynamic> stats = {'total': allLogs.length, 'VENTE': 0, 'DEPENSE': 0, 'STOCK': 0, 'SANCTION': 0};
+      
+      for (var log in allLogs) {
+        final t = log['action_type'] as String?;
+        if (t != null && stats.containsKey(t)) {
+          stats[t] = (stats[t] as int) + 1;
         }
-      } else {
-        throw Exception('Erreur serveur: ${r.statusCode}');
+      }
+
+      if (mounted) {
+        setState(() {
+          _logs = logs;
+          _stats = stats;
+          _isLoading = false;
+          _lastQueryKey = key;
+        });
       }
     } catch (e) {
       if (mounted) setState(() { _errorMessage = e.toString(); _isLoading = false; });

@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../../../../core/database/database_helper.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-
 import 'dart:typed_data';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/erp_stat_card.dart';
-
-const String _baseUrl = 'http://localhost:3000/api';
 
 class AnalyticsPage extends StatefulWidget {
   const AnalyticsPage({super.key});
@@ -41,13 +37,12 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
 
   Future<void> _fetchProducts() async {
     try {
-      final res = await http.get(Uri.parse('$_baseUrl/products'));
-      if (res.statusCode == 200) {
-        if (mounted) {
-          setState(() {
-            _products = json.decode(res.body)['data'];
-          });
-        }
+      final db = await DatabaseHelper.instance.database;
+      final results = await db.query('products');
+      if (mounted) {
+        setState(() {
+          _products = results;
+        });
       }
     } catch (e) {
       // Ignore
@@ -62,19 +57,58 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
 
     try {
       final s = DateFormat('yyyy-MM-dd').format(_startDate);
-      final e = DateFormat('yyyy-MM-dd').format(_endDate);
+      final e = DateFormat('yyyy-MM-dd 23:59:59').format(_endDate);
       
-      final r = await http.get(Uri.parse('$_baseUrl/analytics/dashboard?startDate=$s&endDate=$e&productId=$_selectedProductId'));
-      if (r.statusCode == 200) {
-        final d = json.decode(r.body);
-        if (mounted) {
-          setState(() {
-            _data = d['data'];
-            _isLoading = false;
-          });
-        }
-      } else {
-        throw Exception('Erreur serveur: ${r.statusCode}');
+      final db = await DatabaseHelper.instance.database;
+
+      String prodFilter = "";
+      List<dynamic> args = [s, e];
+      if (_selectedProductId != 'all') {
+        prodFilter = " AND product_id = ?";
+        args.add(int.parse(_selectedProductId));
+      }
+
+      // KPIs
+      final outputsQuery = await db.rawQuery("SELECT COALESCE(SUM(total_revenue), 0) as rev, COALESCE(SUM(total_profit), 0) as prof FROM stock_outputs WHERE output_date >= ? AND output_date <= ?$prodFilter", args);
+      final totalRevenue = outputsQuery.isNotEmpty ? outputsQuery.first['rev'] ?? 0.0 : 0.0;
+      final totalProfit = outputsQuery.isNotEmpty ? outputsQuery.first['prof'] ?? 0.0 : 0.0;
+
+      final expQuery = await db.rawQuery("SELECT COALESCE(SUM(amount), 0) as total FROM expenses WHERE expense_date >= ? AND expense_date <= ?", [s, e]);
+      final totalExpenses = expQuery.isNotEmpty ? expQuery.first['total'] ?? 0.0 : 0.0;
+
+      final sancQuery = await db.rawQuery("SELECT COUNT(*) as count FROM sanctions WHERE sanction_date >= ? AND sanction_date <= ?", [s, e]);
+      final sanctionsCount = sancQuery.isNotEmpty ? sancQuery.first['count'] ?? 0 : 0;
+
+      // dailyEvolution
+      final dailyEvolution = await db.rawQuery("SELECT date(output_date) as date, SUM(total_revenue) as revenue, SUM(total_profit) as profit FROM stock_outputs WHERE output_date >= ? AND output_date <= ?$prodFilter GROUP BY date(output_date) ORDER BY date ASC", args);
+
+      // expenseDistribution
+      final expenseDistribution = await db.rawQuery("SELECT category, SUM(amount) as total_amount FROM expenses WHERE expense_date >= ? AND expense_date <= ? GROUP BY category", [s, e]);
+
+      // topProducts
+      final topProducts = await db.rawQuery("SELECT p.name, SUM(s.quantity) as total_quantity, SUM(s.total_revenue) as revenue FROM stock_outputs s JOIN products p ON s.product_id = p.id WHERE s.output_date >= ? AND s.output_date <= ?$prodFilter GROUP BY p.id ORDER BY total_quantity DESC LIMIT 5", args);
+
+      // productComparison
+      final productComparison = await db.rawQuery("SELECT p.category as product_group, SUM(s.total_profit) as profit FROM stock_outputs s JOIN products p ON s.product_id = p.id WHERE s.output_date >= ? AND s.output_date <= ? GROUP BY p.category", [s, e]);
+
+      final data = {
+        'kpis': {
+          'totalRevenue': totalRevenue,
+          'totalProfit': totalProfit,
+          'totalExpenses': totalExpenses,
+        },
+        'sanctionsCount': sanctionsCount,
+        'dailyEvolution': dailyEvolution,
+        'expenseDistribution': expenseDistribution,
+        'topProducts': topProducts,
+        'productComparison': productComparison,
+      };
+
+      if (mounted) {
+        setState(() {
+          _data = data;
+          _isLoading = false;
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -660,7 +694,9 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       
       String csvData = rows.map((r) => r.map((c) => '"${c.toString().replaceAll('"', '""')}"').join(',')).join('\n');
       
-      await Printing.sharePdf(bytes: Uint8List.fromList(utf8.encode(csvData)), filename: 'Rapport_Nova.csv');
+      // Convert String directly to bytes using utf-8 since dart:convert is removed
+      final bytes = Uint8List.fromList(csvData.codeUnits);
+      await Printing.sharePdf(bytes: bytes, filename: 'Rapport_Nova.csv');
       
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur export CSV: $e')));

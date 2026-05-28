@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../../../../core/database/database_helper.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -58,48 +57,61 @@ class _DashboardViewState extends State<DashboardView> {
     });
 
     try {
-      final response = await http.get(
-        Uri.parse('http://localhost:3000/api/dashboard'),
-      ).timeout(const Duration(seconds: 5)); // Timeout strict 5s
+      final db = await DatabaseHelper.instance.database;
 
-      if (response.statusCode == 200) {
-        final decoded = json.decode(response.body);
-        if (decoded['success'] == true) {
-          final prods = await _productRepo.getAllProducts();
-          double totalP = 0;
-          double totalE = 0;
-          for (var p in prods) {
-            final double tE = p.stockQuantity * p.unitCostReal;
-            final double tR = p.stockQuantity * p.salePrice;
-            final double tP = tR - tE;
-            totalE += tE;
-            totalP += tP;
-          }
+      final cashRow = await db.rawQuery('SELECT balance_after FROM cash_transactions ORDER BY id DESC LIMIT 1');
+      final currentCash = cashRow.isNotEmpty ? cashRow.first['balance_after'] : 0;
 
-          _lastLoadTime = DateTime.now();
-          setState(() {
-            _products = prods;
-            _globalTotalProfit = totalP;
-            _globalTotalExpenses = totalE;
-            _kpis = decoded['data']['kpis'];
-            _recentOutputs = decoded['data']['tables']['recentOutputs'];
-            _lowStockAlerts = decoded['data']['alerts']['lowStockProducts'] ?? [];
-            _topProducts = decoded['data']['productsPerformance']['topByVolume'] ?? [];
-            _topLocations = decoded['data']['locationsPerformance']['topLocations'] ?? [];
-            _financialEvolution = decoded['data']['evolution']['financial'] ?? [];
-            _isLoading = false;
-          });
-        } else {
-          setState(() { _errorMessage = 'Format de réponse invalide.'; _isLoading = false; });
-        }
-      } else {
-        setState(() { _errorMessage = 'Erreur serveur: ${response.statusCode}'; _isLoading = false; });
+      final dailyOutputsRow = await db.rawQuery("SELECT SUM(quantity) as qty FROM stock_outputs WHERE date(output_date) = date('now', 'localtime')");
+      final dailyOutputs = dailyOutputsRow.isNotEmpty ? dailyOutputsRow.first['qty'] ?? 0 : 0;
+
+      final lowStockCountRow = await db.rawQuery("SELECT COUNT(*) as c FROM (SELECT p.id FROM products p LEFT JOIN inventory_batches b ON p.id = b.product_id GROUP BY p.id HAVING COALESCE(SUM(b.quantity_remaining), 0) < 30 OR COALESCE(SUM(b.quantity_remaining), 0) <= p.min_stock)");
+      final lowStockCount = lowStockCountRow.isNotEmpty ? lowStockCountRow.first['c'] : 0;
+
+      final recentOutputs = await db.rawQuery("SELECT s.id, p.name as product_name, s.quantity, s.selling_price, s.total_profit, s.location, s.output_date FROM stock_outputs s JOIN products p ON s.product_id = p.id WHERE date(s.output_date) = date('now', 'localtime') ORDER BY s.output_date DESC");
+
+      final lowStockProducts = await db.rawQuery("SELECT p.id, p.name, p.color, p.min_stock, COALESCE(SUM(b.quantity_remaining), 0) as current_stock FROM products p LEFT JOIN inventory_batches b ON p.id = b.product_id GROUP BY p.id HAVING current_stock < 30 OR current_stock <= p.min_stock ORDER BY current_stock ASC");
+
+      final topProducts = await db.rawQuery("SELECT p.name, p.color, SUM(s.quantity) as total_qty FROM stock_outputs s JOIN products p ON s.product_id = p.id GROUP BY p.id ORDER BY total_qty DESC LIMIT 5");
+
+      final topLocations = await db.rawQuery("SELECT location, SUM(quantity) as total_qty, SUM(total_profit) as total_profit FROM stock_outputs WHERE location IS NOT NULL AND location != '' GROUP BY location ORDER BY total_qty DESC LIMIT 5");
+
+      final prods = await _productRepo.getAllProducts();
+      double totalP = 0;
+      double totalE = 0;
+      for (var p in prods) {
+        final double tE = p.stockQuantity * p.unitCostReal;
+        final double tR = p.stockQuantity * p.salePrice;
+        final double tP = tR - tE;
+        totalE += tE;
+        totalP += tP;
+      }
+
+      if (mounted) {
+        _lastLoadTime = DateTime.now();
+        setState(() {
+          _products = prods;
+          _globalTotalProfit = totalP;
+          _globalTotalExpenses = totalE;
+          _kpis = {
+            'currentCash': currentCash,
+            'dailyOutputs': dailyOutputs,
+            'lowStockCount': lowStockCount,
+          };
+          _recentOutputs = recentOutputs;
+          _lowStockAlerts = lowStockProducts;
+          _topProducts = topProducts;
+          _topLocations = topLocations;
+          _isLoading = false;
+        });
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Impossible de se connecter au serveur local. Vérifiez que Node.js tourne.';
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Erreur lors du chargement des données locales : $e';
+          _isLoading = false;
+        });
+      }
     }
   }
 

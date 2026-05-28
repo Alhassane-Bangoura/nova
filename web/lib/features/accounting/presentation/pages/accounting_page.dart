@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/services/api_service.dart';
+import '../../../../core/database/database_helper.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/erp_stat_card.dart';
 import '../../../products/data/models/product_model.dart';
@@ -40,34 +40,68 @@ class _AccountingPageState extends State<AccountingPage> {
       _errorMessage = '';
     });
     try {
-      final productIdParam = _selectedProduct != null ? '?productId=${_selectedProduct!.id}' : '';
-      final accRes = await ApiService.get('/accounting/dashboard$productIdParam');
-      final expRes = await ApiService.get('/expenses');
+      final db = await DatabaseHelper.instance.database;
+      
+      // Cash ledger
+      final cashHistory = await db.query('cash_transactions', orderBy: 'transaction_date DESC', limit: 100);
+      
+      // Expenses by category
+      String expCatWhere = '';
+      List<dynamic> expArgs = [];
+      if (_selectedProduct != null) {
+        expCatWhere = 'WHERE product_id = ?';
+        expArgs.add(_selectedProduct!.id);
+      }
+      final expensesByCategory = await db.rawQuery(
+        'SELECT category, SUM(amount) as total_amount FROM expenses $expCatWhere GROUP BY category ORDER BY total_amount DESC',
+        expArgs,
+      );
 
-      if (accRes['success'] == true && expRes['success'] == true) {
-        final accData = accRes['data']['data'];
-        final expData = expRes['data']['data'];
-        final prods = _products.isEmpty ? await _productRepo.getAllProducts() : _products;
+      // Recent expenses
+      final recentExpenses = await db.rawQuery(
+        'SELECT * FROM expenses $expCatWhere ORDER BY expense_date DESC LIMIT 20',
+        expArgs,
+      );
+      
+      // Profit summary
+      String? productFilter = _selectedProduct != null ? ' AND s.product_id = ?' : '';
+      List<dynamic> profArgs = _selectedProduct != null ? [_selectedProduct!.id] : [];
 
+      final revenueRow = await db.rawQuery(
+        'SELECT COALESCE(SUM(total_revenue), 0) as rev, COALESCE(SUM(total_profit), 0) as prof FROM stock_outputs s WHERE 1=1$productFilter',
+        profArgs,
+      );
+      final totalExpensesRow = await db.rawQuery(
+        'SELECT COALESCE(SUM(amount), 0) as total FROM expenses',
+      );
+      
+      final grossProfit = revenueRow.isNotEmpty ? revenueRow.first['prof'] ?? 0.0 : 0.0;
+      final totalExpenses = totalExpensesRow.isNotEmpty ? totalExpensesRow.first['total'] ?? 0.0 : 0.0;
+      final netProfit = (grossProfit as num) - (totalExpenses as num);
+      
+      final prods = _products.isEmpty ? await _productRepo.getAllProducts() : _products;
+
+      if (mounted) {
         setState(() {
           _products = prods;
-          _profitSummary = accData['profitSummary'] ?? {};
-          _cashHistory = accData['cashHistory'] ?? [];
-          _expensesByCategory = accData['expensesByCategory'] ?? [];
-          _recentExpenses = expData ?? [];
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _errorMessage = accRes['message'] ?? expRes['message'] ?? "Erreur lors du chargement des données financières.";
+          _profitSummary = {
+            'gross_profit': grossProfit,
+            'total_expenses': totalExpenses,
+            'net_profit': netProfit,
+          };
+          _cashHistory = cashHistory;
+          _expensesByCategory = expensesByCategory;
+          _recentExpenses = recentExpenses;
           _isLoading = false;
         });
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = "Erreur de connexion au serveur.";
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Erreur de chargement: $e';
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -194,18 +228,21 @@ class _AccountingPageState extends State<AccountingPage> {
                             }
                             setDlgState(() => loading = true);
                             try {
-                              final res = await ApiService.post('/accounting/fund-cash', {
+                              final db = await DatabaseHelper.instance.database;
+                              final cashRow = await db.rawQuery('SELECT balance_after FROM cash_transactions ORDER BY id DESC LIMIT 1');
+                              final currentBalance = cashRow.isNotEmpty ? (cashRow.first['balance_after'] as num).toDouble() : 0.0;
+                              final note = noteCtrl.text.isNotEmpty ? noteCtrl.text : 'Alimentation manuelle de caisse';
+                              await db.insert('cash_transactions', {
+                                'type': 'IN',
                                 'amount': amount,
-                                'note': noteCtrl.text.isNotEmpty ? noteCtrl.text : 'Alimentation manuelle de caisse',
+                                'reference_type': 'ALIMENTATION',
+                                'description': note,
+                                'balance_after': currentBalance + amount,
                               });
-                              if (res['success'] == true) {
-                                if (ctx.mounted) Navigator.pop(ctx);
-                                _fetchFinancialData();
-                              } else {
-                                setDlgState(() { err = res['message'] ?? 'Erreur.'; loading = false; });
-                              }
+                              if (ctx.mounted) Navigator.pop(ctx);
+                              _fetchFinancialData();
                             } catch (e) {
-                              setDlgState(() { err = 'Erreur de connexion.'; loading = false; });
+                              setDlgState(() { err = 'Erreur: $e'; loading = false; });
                             }
                           },
                         ),
@@ -529,37 +566,37 @@ class _NewExpenseDialogState extends State<_NewExpenseDialog> {
     final amount = double.tryParse(_amountController.text) ?? 0;
 
     try {
-      final res = await ApiService.post('/expenses', {
+      final db = await DatabaseHelper.instance.database;
+      await db.insert('expenses', {
         'category': _selectedCategory,
         'amount': amount,
         'description': _descController.text,
-        if (_selectedProductId != null) 'productId': _selectedProductId,
+        if (_selectedProductId != null) 'product_id': int.tryParse(_selectedProductId!),
+      });
+      
+      // Deduct from cash
+      final cashRow = await db.rawQuery('SELECT balance_after FROM cash_transactions ORDER BY id DESC LIMIT 1');
+      final currentBalance = cashRow.isNotEmpty ? (cashRow.first['balance_after'] as num).toDouble() : 0.0;
+      await db.insert('cash_transactions', {
+        'type': 'OUT',
+        'amount': amount,
+        'reference_type': 'DEPENSE',
+        'description': '${_selectedCategory}: ${_descController.text}',
+        'balance_after': currentBalance - amount,
+      });
+      
+      // Audit log
+      await db.insert('audit_logs', {
+        'action_type': 'DEPENSE',
+        'entity_name': 'expenses',
+        'description': 'Dépense ${_selectedCategory}: ${amount.toStringAsFixed(0)} GNF',
       });
 
-      if (res['success'] == true) {
-        if (mounted) Navigator.of(context).pop();
-        widget.onSuccess();
-      } else {
-        String errMsg;
-        if (res['code'] == 'INSUFFICIENT_CASH') {
-          final cash = res['currentCash'] ?? 0;
-          final needed = res['requested'] ?? 0;
-          final formatter = NumberFormat('#,###', 'fr_FR');
-          errMsg = '⚠️ Caisse insuffisante !\n'
-              'Solde actuel : ${formatter.format(cash)} GNF\n'
-              'Montant demandé : ${formatter.format(needed)} GNF\n'
-              'Veuillez alimenter la caisse avant d\'effectuer cette dépense.';
-        } else {
-          errMsg = res['message'] ?? 'Erreur lors de la création de la dépense.';
-        }
-        setState(() {
-          _error = errMsg;
-          _isSubmitting = false;
-        });
-      }
+      if (mounted) Navigator.of(context).pop();
+      widget.onSuccess();
     } catch (e) {
       setState(() {
-        _error = 'Erreur de connexion.';
+        _error = 'Erreur: $e';
         _isSubmitting = false;
       });
     }
