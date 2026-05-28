@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/database/database_helper.dart';
 import 'package:intl/intl.dart';
 
@@ -188,7 +187,7 @@ class _DashboardViewState extends State<DashboardView> {
             children: [
               Text(
                 'Vue d\'ensemble de l\'activité',
-                style: GoogleFonts.outfit(
+                style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.w800,
                   color: isDark ? Colors.white : AppColors.navyBlue,
@@ -216,7 +215,7 @@ class _DashboardViewState extends State<DashboardView> {
                   const SizedBox(width: 8),
                   Text(
                     'Système ERP synchronisé en temps réel',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       fontSize: 14,
                       color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                       fontWeight: FontWeight.w500,
@@ -406,7 +405,7 @@ class _DashboardViewState extends State<DashboardView> {
               const SizedBox(width: 12),
               Text(
                 'Alertes de Stock',
-                style: GoogleFonts.outfit(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                   color: isDark ? Colors.red.shade300 : Colors.red.shade700,
@@ -444,7 +443,7 @@ class _DashboardViewState extends State<DashboardView> {
                   children: [
                     Text(
                       '${alert['name']} ${alert['color'] != null && alert['color'] != 'Unique' ? "(${alert['color']})" : ""}',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: isDark ? Colors.white : AppColors.textDark,
                         fontSize: 14,
@@ -464,7 +463,7 @@ class _DashboardViewState extends State<DashboardView> {
                       ),
                       child: Text(
                         'Reste ${alert['current_stock']} pc',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -548,7 +547,7 @@ class _DashboardViewState extends State<DashboardView> {
         children: [
           Text(
             title,
-            style: GoogleFonts.outfit(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: isDark ? Colors.white : AppColors.textDark,
@@ -581,7 +580,7 @@ class _DashboardViewState extends State<DashboardView> {
         children: [
           Text(
             title,
-            style: GoogleFonts.outfit(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: isDark ? Colors.white : AppColors.textDark,
@@ -604,7 +603,7 @@ class _DashboardViewState extends State<DashboardView> {
         dataRowMinHeight: 56,
         dataRowMaxHeight: 56,
         dividerThickness: 0.5,
-        headingTextStyle: GoogleFonts.inter(
+        headingTextStyle: TextStyle(
           fontWeight: FontWeight.bold,
           color: isDark ? Colors.grey.shade300 : AppColors.navyBlue,
           fontSize: 13,
@@ -644,13 +643,13 @@ class _DashboardViewState extends State<DashboardView> {
                     const SizedBox(width: 12),
                     Text(
                       output['product_name'].toString(),
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: isDark ? Colors.white : AppColors.textDark),
+                      style: TextStyle(fontWeight: FontWeight.w600, color: isDark ? Colors.white : AppColors.textDark),
                     ),
                   ],
                 )
               ),
-              DataCell(Text(output['quantity'].toString(), style: GoogleFonts.inter(color: isDark ? Colors.grey.shade300 : Colors.black87, fontWeight: FontWeight.w500))),
-              DataCell(Text(output['location'].toString(), style: GoogleFonts.inter(color: isDark ? Colors.grey.shade300 : Colors.black87))),
+              DataCell(Text(output['quantity'].toString(), style: TextStyle(color: isDark ? Colors.grey.shade300 : Colors.black87, fontWeight: FontWeight.w500))),
+              DataCell(Text(output['location'].toString(), style: TextStyle(color: isDark ? Colors.grey.shade300 : Colors.black87))),
               DataCell(
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -664,7 +663,7 @@ class _DashboardViewState extends State<DashboardView> {
                   ),
                   child: Text(
                     _formatCurrency(output['total_profit']),
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: Colors.green.shade700,
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -675,7 +674,7 @@ class _DashboardViewState extends State<DashboardView> {
               DataCell(
                 Text(
                   formattedDate,
-                  style: GoogleFonts.inter(color: isDark ? Colors.grey.shade400 : Colors.grey[600], fontSize: 13),
+                  style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey[600], fontSize: 13),
                 ),
               ),
             ],
@@ -715,13 +714,13 @@ class _DashboardViewState extends State<DashboardView> {
           ),
           title: Text(
             '${product['name']} ${product['color'] != null && product['color'] != 'Unique' ? "(${product['color']})" : ""}',
-            style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: isDark ? Colors.white : AppColors.textDark, fontSize: 14),
+            style: TextStyle(fontWeight: FontWeight.w600, color: isDark ? Colors.white : AppColors.textDark, fontSize: 14),
           ),
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 4.0),
             child: Text(
               '${product['total_qty']} unités écoulées',
-              style: GoogleFonts.inter(color: isDark ? Colors.grey.shade500 : Colors.grey[500], fontSize: 12),
+              style: TextStyle(color: isDark ? Colors.grey.shade500 : Colors.grey[500], fontSize: 12),
             ),
           ),
           trailing: Container(
@@ -771,18 +770,18 @@ class _DashboardViewState extends State<DashboardView> {
           ),
           title: Text(
             loc['location'],
-            style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: isDark ? Colors.white : AppColors.textDark, fontSize: 14),
+            style: TextStyle(fontWeight: FontWeight.w600, color: isDark ? Colors.white : AppColors.textDark, fontSize: 14),
           ),
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 4.0),
             child: Text(
               '${loc['total_qty']} unités',
-              style: GoogleFonts.inter(color: isDark ? Colors.grey.shade500 : Colors.grey[500], fontSize: 12),
+              style: TextStyle(color: isDark ? Colors.grey.shade500 : Colors.grey[500], fontSize: 12),
             ),
           ),
           trailing: Text(
             _formatCurrency(loc['total_profit']),
-            style: GoogleFonts.inter(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.green.shade700,
               fontSize: 14,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/database/database_helper.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
@@ -88,7 +87,7 @@ class _StockOutputsPageState extends State<StockOutputsPage> {
           children: [
             Text(
               'Ventes',
-              style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.textDark),
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.textDark),
             ),
             const SizedBox(height: 4),
             Text(
@@ -101,7 +100,7 @@ class _StockOutputsPageState extends State<StockOutputsPage> {
           onPressed: _openNewOutputDialog,
           icon: const Icon(Icons.add_shopping_cart, color: Colors.white),
           label: Text('Enregistrer une Sortie',
-              style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.white)),
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.gold,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -158,7 +157,7 @@ class _StockOutputsPageState extends State<StockOutputsPage> {
           children: [
             Icon(Icons.outbox_outlined, size: 80, color: AppColors.gold.withValues(alpha: 0.4)),
             const SizedBox(height: 20),
-            Text('Aucune sortie enregistrée.', style: GoogleFonts.outfit(fontSize: 20, color: Colors.grey[500])),
+            Text('Aucune sortie enregistrée.', style: TextStyle(fontSize: 20, color: Colors.grey[500])),
             const SizedBox(height: 8),
             Text('Cliquez sur le bouton doré pour enregistrer la première sortie.',
                 style: TextStyle(fontSize: 14, color: Colors.grey[400])),
@@ -209,7 +208,7 @@ class _StockOutputsPageState extends State<StockOutputsPage> {
                         const SizedBox(width: 8),
                         Text(
                           date,
-                          style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark),
                         ),
                       ],
                     ),
@@ -508,7 +507,7 @@ class _NewOutputDialogState extends State<NewOutputDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Nouvelle Sortie de Stock', style: GoogleFonts.outfit(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold)),
+                        Text('Nouvelle Sortie de Stock', style: TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold)),
                         Text('Le stock, la caisse et le bénéfice se mettront à jour automatiquement.', style: TextStyle(fontSize: 12, color: Colors.white70)),
                       ],
                     ),
@@ -624,28 +623,28 @@ class _NewOutputDialogState extends State<NewOutputDialog> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('Montant Total Encaissement :', style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppColors.textDark)),
-                                Text(_calculateTotalRevenue(), style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green.shade700)),
+                                Text('Montant Total Encaissement :', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textDark)),
+                                Text(_calculateTotalRevenue(), style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green.shade700)),
                               ],
                             ),
                             const SizedBox(height: 8),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('Stock Restant Estimé :', style: GoogleFonts.inter(color: Colors.grey.shade700)),
-                                Text(_calculateRemainingStock(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppColors.navyBlue)),
+                                Text('Stock Restant Estimé :', style: TextStyle(color: Colors.grey.shade700)),
+                                Text(_calculateRemainingStock(), style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.navyBlue)),
                               ],
                             ),
                             const SizedBox(height: 4),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('Bénéfice Écoulement (estimé) :', style: GoogleFonts.inter(color: Colors.grey.shade700)),
+                                Text('Bénéfice Écoulement (estimé) :', style: TextStyle(color: Colors.grey.shade700)),
                                 Row(
                                   children: [
                                     const Icon(Icons.auto_awesome, size: 14, color: AppColors.gold),
                                     const SizedBox(width: 4),
-                                    Text(_calculateBatchProfit(), style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.gold)),
+                                    Text(_calculateBatchProfit(), style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.gold)),
                                   ],
                                 ),
                               ],

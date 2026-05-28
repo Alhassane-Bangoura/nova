@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'features/splash/presentation/pages/splash_page.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'features/dashboard/presentation/pages/dashboard_page.dart';
@@ -23,7 +22,7 @@ class NovaApp extends StatelessWidget {
         return MaterialApp(
           title: 'NOVA GENIX DIGITAL',
           debugShowCheckedModeBanner: false,
-          themeMode: currentMode,
+          themeMode: ThemeMode.light,
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
@@ -39,22 +38,18 @@ class NovaApp extends StatelessWidget {
               seedColor: const Color(0xFFFCA311), // Gold
               brightness: Brightness.light,
             ),
-            textTheme: GoogleFonts.interTextTheme(
-              ThemeData(brightness: Brightness.light).textTheme,
-            ),
+            textTheme: ThemeData(brightness: Brightness.light).textTheme,
           ),
           darkTheme: ThemeData(
             useMaterial3: true,
             colorScheme: ColorScheme.fromSeed(
               seedColor: const Color(0xFFFCA311), // Gold
-              brightness: Brightness.dark,
-              surface: const Color(0xFF14213D), // Navy Blue
+              brightness: Brightness.light, // Forcé en light pour éviter les problèmes d'adaptation
+              surface: const Color(0xFFF1F5F9), // Background Light
             ),
-            textTheme: GoogleFonts.interTextTheme(
-              ThemeData(brightness: Brightness.dark).textTheme,
-            ),
+            textTheme: ThemeData(brightness: Brightness.light).textTheme,
           ),
-          home: const DashboardPage(), // Temporarily bypass login
+          home: const SplashScreen(), // Restore authentication flow
         );
       },
     );

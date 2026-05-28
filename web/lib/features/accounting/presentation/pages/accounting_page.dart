@@ -1,6 +1,5 @@
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/database/database_helper.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -160,7 +159,7 @@ class _AccountingPageState extends State<AccountingPage> {
                       children: [
                         const Icon(Icons.account_balance_wallet, color: AppColors.gold, size: 28),
                         const SizedBox(width: 16),
-                        Expanded(child: Text('Alimenter la Caisse', style: GoogleFonts.outfit(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold))),
+                        Expanded(child: Text('Alimenter la Caisse', style: TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold))),
                         IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(ctx)),
                       ],
                     ),
@@ -281,7 +280,7 @@ class _AccountingPageState extends State<AccountingPage> {
             children: [
               Text(
                 'Contrôle Financier & Caisse',
-                style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark),
               ),
               Row(
                 children: [
@@ -421,7 +420,7 @@ class _AccountingPageState extends State<AccountingPage> {
             children: [
               Icon(icon, color: isDark ? Colors.white : AppColors.navyBlue, size: 20),
               const SizedBox(width: 8),
-              Text(title, style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark)),
+              Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark)),
             ],
           ),
           const SizedBox(height: 16),
@@ -635,7 +634,7 @@ class _NewExpenseDialogState extends State<_NewExpenseDialog> {
                 children: [
                   const Icon(Icons.receipt_long, color: AppColors.gold, size: 28),
                   const SizedBox(width: 16),
-                  Expanded(child: Text('Enregistrer une Dépense', style: GoogleFonts.outfit(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold))),
+                  Expanded(child: Text('Enregistrer une Dépense', style: TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold))),
                   IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(context)),
                 ],
               ),

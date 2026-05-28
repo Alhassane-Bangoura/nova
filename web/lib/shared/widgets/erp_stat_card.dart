@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class ErpStatCard extends StatelessWidget {
   final String title;
@@ -58,7 +57,7 @@ class ErpStatCard extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     fontSize: 14,
                     color: isDark ? cLightGray : cNavyBlue.withValues(alpha: 0.7),
                     fontWeight: FontWeight.w600,
@@ -88,7 +87,7 @@ class ErpStatCard extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   value,
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
                     color: isDark ? cWhite : cNavyBlue,
@@ -111,7 +110,7 @@ class ErpStatCard extends StatelessWidget {
                         subtitle!,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           fontSize: 12,
                           color: isDark ? cLightGray.withValues(alpha: 0.7) : cNavyBlue.withValues(alpha: 0.6),
                           fontWeight: FontWeight.w500,

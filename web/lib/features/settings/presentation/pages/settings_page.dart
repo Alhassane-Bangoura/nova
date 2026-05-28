@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../main.dart'; // themeNotifier
 import '../../../../services/auth_service.dart';
@@ -70,7 +69,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Modifier le mot de passe', style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                            Text('Modifier le mot de passe', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                             Text('Sécurité de votre compte', style: TextStyle(color: Colors.white54, fontSize: 13)),
                           ],
                         ),
@@ -226,7 +225,7 @@ class _SettingsPageState extends State<SettingsPage> {
         children: [
           Text(
             'Paramètres',
-            style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark),
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark),
           ),
           const SizedBox(height: 8),
           Text('Configuration de l\'application Nova ERP', style: TextStyle(color: Colors.grey.shade500)),
@@ -246,14 +245,14 @@ class _SettingsPageState extends State<SettingsPage> {
                   backgroundColor: AppColors.gold.withValues(alpha: 0.2),
                   child: Text(
                     _username.isNotEmpty ? _username[0].toUpperCase() : 'A',
-                    style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.gold),
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.gold),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_username, style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                    Text(_username, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
                     Text('Administrateur Principal', style: TextStyle(color: Colors.white54, fontSize: 13)),
                   ],
                 ),
@@ -463,7 +462,7 @@ class _SettingsPageState extends State<SettingsPage> {
               children: [
                 Icon(icon, color: isDark ? Colors.white70 : AppColors.navyBlue, size: 20),
                 const SizedBox(width: 10),
-                Text(title, style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark)),
+                Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppColors.textDark)),
               ],
             ),
           ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../../../core/database/database_helper.dart';
 import '../../../../../core/theme/app_colors.dart';
@@ -112,7 +111,7 @@ class _ChinaPurchasesPageState extends State<ChinaPurchasesPage> {
                   children: [
                     const Icon(Icons.local_shipping_outlined, color: AppColors.gold, size: 24),
                     const SizedBox(width: 12),
-                    Expanded(child: Text('Confirmer la Réception', style: GoogleFonts.outfit(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold))),
+                    Expanded(child: Text('Confirmer la Réception', style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold))),
                     IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(ctx, false)),
                   ],
                 ),
@@ -125,7 +124,7 @@ class _ChinaPurchasesPageState extends State<ChinaPurchasesPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('Frais de Transport à la Réception', style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppColors.navyBlue)),
+                      Text('Frais de Transport à la Réception', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.navyBlue)),
                       const SizedBox(height: 4),
                       Text('Montant payé au transporteur local lors de la livraison (optionnel)', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
                       const SizedBox(height: 12),
@@ -233,7 +232,7 @@ class _ChinaPurchasesPageState extends State<ChinaPurchasesPage> {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: Text('Bilan du Lot #${batch['id']} - ${batch['product_name']}', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppColors.navyBlue)),
+            title: Text('Bilan du Lot #${batch['id']} - ${batch['product_name']}', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.navyBlue)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,7 +310,7 @@ class _ChinaPurchasesPageState extends State<ChinaPurchasesPage> {
                   children: [
                     const Icon(Icons.flight_takeoff_rounded, color: AppColors.gold, size: 28),
                     const SizedBox(width: 16),
-                    Expanded(child: Text('Nouvelle Commande', style: GoogleFonts.outfit(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold))),
+                    Expanded(child: Text('Nouvelle Commande', style: TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold))),
                     IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(ctx)),
                   ],
                 ),
@@ -438,7 +437,7 @@ class _ChinaPurchasesPageState extends State<ChinaPurchasesPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Commandes', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.navyBlue)),
+              Text('Commandes', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.navyBlue)),
               ElevatedButton.icon(
                 onPressed: _showAddPurchaseDialog,
                 icon: const Icon(Icons.flight_takeoff, color: Colors.white),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/database/database_helper.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -187,7 +186,7 @@ class _AuditPageState extends State<AuditPage> {
                         children: [
                           Text(
                             cfg['label'] as String,
-                            style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                           ),
                           Text('Détail de l\'action', style: TextStyle(color: Colors.white70, fontSize: 13)),
                         ],
@@ -280,7 +279,7 @@ class _AuditPageState extends State<AuditPage> {
               children: [
                 Text(
                   'Audit & Historique',
-                  style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.navyBlue),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.navyBlue),
                 ),
                 Text('Cliquez sur une action pour voir les détails', style: TextStyle(color: Colors.grey.shade500)),
               ],
@@ -310,7 +309,7 @@ class _AuditPageState extends State<AuditPage> {
                         const SizedBox(width: 8),
                         Text(
                           '${DateFormat('dd/MM/yyyy').format(_startDate)} – ${DateFormat('dd/MM/yyyy').format(_endDate)}',
-                          style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppColors.navyBlue),
+                          style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.navyBlue),
                         ),
                       ],
                     ),
@@ -378,7 +377,7 @@ class _AuditPageState extends State<AuditPage> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('$count', style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: color)),
+                      Text('$count', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color)),
                       Text(c['label'] as String, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                     ],
                   ),
@@ -533,10 +532,10 @@ class _AuditPageState extends State<AuditPage> {
             child: Row(
               children: [
                 const SizedBox(width: 44),
-                Expanded(flex: 3, child: Text('Description', style: GoogleFonts.inter(fontWeight: FontWeight.w900, color: Colors.grey.shade700, fontSize: 13))),
-                Expanded(flex: 1, child: Text('Module', style: GoogleFonts.inter(fontWeight: FontWeight.w900, color: Colors.grey.shade700, fontSize: 13))),
-                Expanded(flex: 1, child: Text('Employé', style: GoogleFonts.inter(fontWeight: FontWeight.w900, color: Colors.grey.shade700, fontSize: 13))),
-                SizedBox(width: 140, child: Text('Date & Heure', style: GoogleFonts.inter(fontWeight: FontWeight.w900, color: Colors.grey.shade700, fontSize: 13))),
+                Expanded(flex: 3, child: Text('Description', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.grey.shade700, fontSize: 13))),
+                Expanded(flex: 1, child: Text('Module', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.grey.shade700, fontSize: 13))),
+                Expanded(flex: 1, child: Text('Employé', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.grey.shade700, fontSize: 13))),
+                SizedBox(width: 140, child: Text('Date & Heure', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.grey.shade700, fontSize: 13))),
                 const SizedBox(width: 32),
               ],
             ),
@@ -584,7 +583,7 @@ class _AuditPageState extends State<AuditPage> {
               flex: 3,
               child: Text(
                 log['description']?.toString() ?? '—',
-                style: GoogleFonts.inter(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.w600),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -597,7 +596,7 @@ class _AuditPageState extends State<AuditPage> {
                 decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(4)),
                 child: Text(
                   log['entity_name']?.toString() ?? '—',
-                  style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w800, color: color),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: color),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -619,7 +618,7 @@ class _AuditPageState extends State<AuditPage> {
                   Flexible(
                     child: Text(
                       log['employee_name']?.toString() ?? '—',
-                      style: GoogleFonts.inter(fontSize: 12, color: Colors.black87, fontWeight: FontWeight.w700),
+                      style: TextStyle(fontSize: 12, color: Colors.black87, fontWeight: FontWeight.w700),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -629,7 +628,7 @@ class _AuditPageState extends State<AuditPage> {
             // Date
             SizedBox(
               width: 140,
-              child: Text(dateStr, style: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade700, fontWeight: FontWeight.w600)),
+              child: Text(dateStr, style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontWeight: FontWeight.w600)),
             ),
             // Icône "voir détails"
             const Icon(Icons.chevron_right, size: 18, color: Colors.grey),

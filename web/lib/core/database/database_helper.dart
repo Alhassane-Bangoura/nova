@@ -31,6 +31,21 @@ class DatabaseHelper {
       options: OpenDatabaseOptions(
         version: 1,
         onCreate: _createDB,
+        onOpen: (db) async {
+          // S'assurer que toutes les tables existent (utile pour les MAJ sans onUpgrade)
+          await _createDB(db, 1);
+          
+          // Migrer la table expenses si nécessaire
+          try {
+            final columns = await db.rawQuery("PRAGMA table_info(expenses)");
+            final hasProductId = columns.any((c) => c['name'] == 'product_id');
+            if (!hasProductId) {
+              await db.execute("ALTER TABLE expenses ADD COLUMN product_id INTEGER REFERENCES products(id) ON DELETE SET NULL");
+            }
+          } catch (e) {
+            debugPrint("Erreur lors de la migration des colonnes: $e");
+          }
+        },
       ),
     );
   }
@@ -39,7 +54,7 @@ class DatabaseHelper {
     debugPrint("⏳ Création de la base de données SQLite locale...");
 
     await db.execute('''
-      CREATE TABLE products (
+      CREATE TABLE IF NOT EXISTS products (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL,
           category TEXT NOT NULL,
@@ -52,7 +67,7 @@ class DatabaseHelper {
     ''');
 
     await db.execute('''
-      CREATE TABLE inventory_batches (
+      CREATE TABLE IF NOT EXISTS inventory_batches (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           product_id INTEGER NOT NULL,
           supplier_name TEXT NOT NULL,
@@ -71,7 +86,7 @@ class DatabaseHelper {
     ''');
 
     await db.execute('''
-      CREATE TABLE stock_outputs (
+      CREATE TABLE IF NOT EXISTS stock_outputs (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           product_id INTEGER NOT NULL,
           batch_id INTEGER NOT NULL,
@@ -88,7 +103,7 @@ class DatabaseHelper {
     ''');
 
     await db.execute('''
-      CREATE TABLE expenses (
+      CREATE TABLE IF NOT EXISTS expenses (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           category TEXT NOT NULL,
           amount REAL NOT NULL,
@@ -100,7 +115,7 @@ class DatabaseHelper {
     ''');
 
     await db.execute('''
-      CREATE TABLE cash_transactions (
+      CREATE TABLE IF NOT EXISTS cash_transactions (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           type TEXT NOT NULL CHECK(type IN ('IN', 'OUT')),
           amount REAL NOT NULL,
@@ -113,7 +128,7 @@ class DatabaseHelper {
     ''');
 
     await db.execute('''
-      CREATE TABLE employees (
+      CREATE TABLE IF NOT EXISTS employees (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL,
           role TEXT NOT NULL,
@@ -122,7 +137,7 @@ class DatabaseHelper {
     ''');
 
     await db.execute('''
-      CREATE TABLE sanctions (
+      CREATE TABLE IF NOT EXISTS sanctions (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           employee_id INTEGER NOT NULL,
           amount REAL NOT NULL,
@@ -134,21 +149,7 @@ class DatabaseHelper {
     ''');
 
     await db.execute('''
-      CREATE TABLE audit_logs (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          action_type TEXT NOT NULL,
-          entity_name TEXT NOT NULL,
-          entity_id INTEGER,
-          employee_name TEXT,
-          description TEXT NOT NULL,
-          old_value TEXT,
-          new_value TEXT,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-    ''');
-
-    await db.execute('''
-      CREATE TABLE audit_logs (
+      CREATE TABLE IF NOT EXISTS audit_logs (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           action_type TEXT NOT NULL,
           entity_name TEXT NOT NULL,

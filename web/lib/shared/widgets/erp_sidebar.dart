@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
 
@@ -38,7 +37,7 @@ class ErpSidebar extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'NOVA ERP',
-                    style: GoogleFonts.outfit(
+                    style: TextStyle(
                       color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -85,7 +84,7 @@ class ErpSidebar extends StatelessWidget {
                 );
               },
               icon: const Icon(Icons.logout, color: AppColors.navyBlue),
-              label: Text('Déconnexion', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.navyBlue)),
+              label: Text('Déconnexion', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.navyBlue)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.gold,
                 minimumSize: const Size(double.infinity, 48),
@@ -111,7 +110,7 @@ class ErpSidebar extends StatelessWidget {
         leading: Icon(icon, color: isSelected ? AppColors.gold : Colors.white70),
         title: Text(
           title,
-          style: GoogleFonts.inter(
+          style: TextStyle(
             color: isSelected ? AppColors.gold : Colors.white70,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
             fontSize: 14,

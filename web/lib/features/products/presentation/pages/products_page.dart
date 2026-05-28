@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -132,7 +131,7 @@ class _ProductsPageState extends State<ProductsPage> {
           const SizedBox(height: 16),
           Text(
             'Résumé par type d\'article',
-            style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark),
           ),
           const SizedBox(height: 8),
           SingleChildScrollView(
@@ -164,8 +163,8 @@ class _ProductsPageState extends State<ProductsPage> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(entry.key, style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey.shade600)),
-                          Text('${entry.value} restants', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.navyBlue)),
+                          Text(entry.key, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey.shade600)),
+                          Text('${entry.value} restants', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.navyBlue)),
                         ],
                       ),
                     ],
@@ -220,7 +219,7 @@ class _ProductsPageState extends State<ProductsPage> {
           onPressed: () => _showAddProductDialog(context),
           icon: const Icon(Icons.add, color: Colors.white, size: 18),
           label: Text('Nouveau Produit',
-              style: GoogleFonts.inter(
+              style: TextStyle(
                   color: Colors.white, fontWeight: FontWeight.w600)),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.navyBlue,
@@ -254,7 +253,7 @@ class _ProductsPageState extends State<ProductsPage> {
         children: [
           Icon(Icons.wifi_off, size: 64, color: Colors.red.shade300),
           const SizedBox(height: 16),
-          Text('Connexion impossible', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red.shade400)),
+          Text('Connexion impossible', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red.shade400)),
           const SizedBox(height: 8),
           Text(_errorMessage!, style: TextStyle(color: Colors.grey.shade600, fontSize: 13), textAlign: TextAlign.center),
           const SizedBox(height: 24),
@@ -276,7 +275,7 @@ class _ProductsPageState extends State<ProductsPage> {
         children: [
           Icon(Icons.inventory_2_outlined, size: 72, color: AppColors.gold.withValues(alpha: 0.3)),
           const SizedBox(height: 16),
-          Text('Aucun produit trouvé', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey.shade500)),
+          Text('Aucun produit trouvé', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey.shade500)),
           const SizedBox(height: 8),
           Text('Ajoutez votre premier produit (Genouillère, Casque...)',
               style: TextStyle(color: Colors.grey.shade400)),
@@ -359,7 +358,7 @@ class _ProductsPageState extends State<ProductsPage> {
       flex: flex,
       child: Text(
         text.toUpperCase(),
-        style: GoogleFonts.inter(
+        style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w700,
           color: Colors.grey.shade500,
@@ -422,7 +421,7 @@ class _ProductsPageState extends State<ProductsPage> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: Text('Confirmer la suppression',
-                          style: GoogleFonts.outfit(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
+                          style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
@@ -761,7 +760,7 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
                   Expanded(
                     child: Text(
                       widget.product == null ? 'Nouveau Produit' : 'Modifier le Produit',
-                      style: GoogleFonts.outfit(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                   ),
                   IconButton(
@@ -782,7 +781,7 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
                     children: [
                 
                 if (widget.product == null) ...[
-                  Text('Sélectionner une commande (Optionnel)', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+                  Text('Sélectionner une commande (Optionnel)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
                   const SizedBox(height: 6),
                   if (_isLoadingPurchases)
                     const Center(child: CircularProgressIndicator())
@@ -830,7 +829,7 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
               const SizedBox(height: 24),
               const Divider(),
               const SizedBox(height: 16),
-              Text('Arrivage Chine (Détails du Stock)', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.navyBlue)),
+              Text('Arrivage Chine (Détails du Stock)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.navyBlue)),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -881,10 +880,10 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Dépenses Totales (Produits + Frais)', style: GoogleFonts.inter(fontWeight: FontWeight.w500, color: Colors.grey.shade300, fontSize: 13)),
+                            Text('Dépenses Totales (Produits + Frais)', style: TextStyle(fontWeight: FontWeight.w500, color: Colors.grey.shade300, fontSize: 13)),
                             Text(
                               '${totalExpenses.toStringAsFixed(0)} GNF',
-                              style: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 16, color: Colors.white),
+                              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Colors.white),
                             ),
                           ],
                         ),
@@ -892,10 +891,10 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Revenu Total Estimé', style: GoogleFonts.inter(fontWeight: FontWeight.w500, color: Colors.grey.shade300, fontSize: 13)),
+                            Text('Revenu Total Estimé', style: TextStyle(fontWeight: FontWeight.w500, color: Colors.grey.shade300, fontSize: 13)),
                             Text(
                               '${totalRevenue.toStringAsFixed(0)} GNF',
-                              style: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 16, color: Colors.white),
+                              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Colors.white),
                             ),
                           ],
                         ),
@@ -906,10 +905,10 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Bénéfice Total Estimé', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14)),
+                            Text('Bénéfice Total Estimé', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14)),
                             Text(
                               '${totalProfit.toStringAsFixed(0)} GNF',
-                              style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 20, color: totalProfit >= 0 ? AppColors.gold : Colors.redAccent),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: totalProfit >= 0 ? AppColors.gold : Colors.redAccent),
                             ),
                           ],
                         ),
@@ -968,7 +967,7 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+        Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
         const SizedBox(height: 6),
         TextFormField(
           controller: ctrl,
@@ -1169,7 +1168,7 @@ class _ProductRowItemState extends State<_ProductRowItem> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Détails Financiers', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.navyBlue)),
+                        Text('Détails Financiers', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.navyBlue)),
                         const SizedBox(height: 12),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,

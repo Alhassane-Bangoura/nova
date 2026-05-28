@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/database/database_helper.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -177,7 +176,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
               children: [
                 Text(
                   'Rapports & Analytics',
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: AppColors.navyBlue,
@@ -254,7 +253,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
             child: DropdownButton<String>(
               value: _selectedProductId,
               icon: const Icon(Icons.arrow_drop_down, color: AppColors.navyBlue),
-              style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppColors.navyBlue),
+              style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.navyBlue),
               items: [
                 const DropdownMenuItem(value: 'all', child: Text('Tous les produits')),
                 ..._products.map((p) => DropdownMenuItem(
@@ -297,7 +296,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                 const SizedBox(width: 8),
                 Text(
                   '${DateFormat('dd/MM/yyyy').format(_startDate)} - ${DateFormat('dd/MM/yyyy').format(_endDate)}',
-                  style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                  style: TextStyle(fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -327,7 +326,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
           children: [
             const Icon(Icons.download, size: 18, color: AppColors.navyBlue),
             const SizedBox(width: 8),
-            Text('Exporter', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.navyBlue)),
+            Text('Exporter', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.navyBlue)),
           ],
         ),
       ),
@@ -372,7 +371,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Évolution Ventes vs Bénéfices', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text('Évolution Ventes vs Bénéfices', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 24),
           Expanded(
             child: LineChart(
@@ -507,7 +506,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Répartition des Dépenses', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text('Répartition des Dépenses', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 24),
           Expanded(
             child: PieChart(
@@ -540,7 +539,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Top 5 Produits Vendus', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text('Top 5 Produits Vendus', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           if (top.isEmpty) const Text('Aucune vente enregistrée.')
           else ...top.map((p) => Padding(
@@ -548,10 +547,10 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(child: Text(p['name'].toString().toUpperCase(), style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 13))),
-                Text('${p['total_quantity']} unités', style: GoogleFonts.inter(color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
+                Expanded(child: Text(p['name'].toString().toUpperCase(), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13))),
+                Text('${p['total_quantity']} unités', style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
                 const SizedBox(width: 16),
-                Text(_fmt(p['revenue']), style: GoogleFonts.inter(color: AppColors.navyBlue, fontWeight: FontWeight.w900)),
+                Text(_fmt(p['revenue']), style: TextStyle(color: AppColors.navyBlue, fontWeight: FontWeight.w900)),
               ],
             ),
           )),
@@ -580,7 +579,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Comparatif Bénéfices', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text('Comparatif Bénéfices', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 24),
           Row(
             children: [
@@ -602,7 +601,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
         children: [
           Text(title, style: TextStyle(color: c, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          Text(_fmt(value), style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.navyBlue)),
+          Text(_fmt(value), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.navyBlue)),
         ],
       ),
     );
@@ -614,11 +613,11 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
         Container(width: 12, height: 12, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(text, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey.shade700), overflow: TextOverflow.ellipsis),
+          child: Text(text, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey.shade700), overflow: TextOverflow.ellipsis),
         ),
         if (amount != null) ...[
           const SizedBox(width: 8),
-          Text(_fmt(amount), style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.black87)),
+          Text(_fmt(amount), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.black87)),
         ]
       ],
     );

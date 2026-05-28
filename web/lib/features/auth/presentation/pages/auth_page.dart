@@ -1,6 +1,5 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../../services/auth_service.dart';
 import '../../../dashboard/presentation/pages/dashboard_page.dart';
 
@@ -210,7 +209,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 const SizedBox(height: 32),
                 Text(
                   'BIENVENUE',
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -239,7 +238,7 @@ class _AuthScreenState extends State<AuthScreen> {
           children: [
             Text(
               'Inscription',
-              style: GoogleFonts.outfit(
+              style: TextStyle(
                 fontSize: 36,
                 fontWeight: FontWeight.bold,
                 color: const Color(0xFF14213D), // Navy Blue
@@ -248,7 +247,7 @@ class _AuthScreenState extends State<AuthScreen> {
             const SizedBox(height: 8),
             Text(
               'Veuillez créer votre compte administrateur',
-              style: GoogleFonts.inter(
+              style: TextStyle(
                 fontSize: 12,
                 color: Colors.grey[500],
               ),
@@ -303,7 +302,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
                 child: Text(
                   'S\'inscrire',
-                  style: GoogleFonts.inter(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -406,7 +405,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     children: [
                       Text(
                         'CONNEXION',
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(
                           fontSize: 36,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
@@ -416,7 +415,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       const SizedBox(height: 12),
                       Text(
                         'INNOVER. CONNECTER. PROPULSER.',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: const Color(0xFFFCA311), // Gold
@@ -462,7 +461,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           ),
                           child: Text(
                             'SE CONNECTER',
-                            style: GoogleFonts.outfit(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1.5,
